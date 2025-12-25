@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CleanFind - Login</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #4a5568;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .app-title {
+            font-size: 2rem;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .app-subtitle {
+            color: #718096;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f7fafc;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .role-selector {
+            display: flex;
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .role-option {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .role-option.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #059669;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            color: #667eea;
+            margin-top: 1rem;
+        }
+
+        .loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .demo-credentials {
+            background: #f0f4f8;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 2rem;
+            text-align: left;
+        }
+
+        .demo-title {
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+
+        .demo-item {
+            font-size: 0.9rem;
+            color: #718096;
+            margin: 0.25rem 0;
+        }
+
+        .demo-item strong {
+            color: #2d3748;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .app-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <i class="fas fa-restroom"></i>
+        </div>
+        <div class="app-title">CleanFind</div>
+        <div class="app-subtitle">Smart Hygiene Management</div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <div class="role-selector">
+            <button class="role-option active" data-role="public">Public User</button>
+            <button class="role-option" data-role="cleaner">Cleaning Staff</button>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input type="text" id="username" class="form-input" placeholder="Enter your username" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+            </div>
+            <button type="submit" class="login-button" id="loginButton">
+                <i class="fas fa-sign-in-alt"></i>
+                Login
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <i class="fas fa-spinner"></i>
+            Logging in...
+        </div>
+
+        <div class="demo-credentials">
+            <div class="demo-title">Demo Credentials:</div>
+            <div class="demo-item"><strong>Public User:</strong> user1 / password123</div>
+            <div class="demo-item"><strong>Cleaner:</strong> cleaner1 / password123</div>
+            <div class="demo-item"><strong>Admin:</strong> admin / admin123</div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let selectedRole = 'public';
+        const accessToken = localStorage.getItem('accessToken');
+
+        // Check if already logged in
+        if (accessToken) {
+            // Try to validate token and redirect
+            fetch('/api/user/profile', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Invalid token');
+            })
+            .then(user => {
+                if (user.role === 'cleaner') {
+                    window.location.href = '/staff-dashboard';
+                } else {
+                    window.location.href = '/dashboard';
+                }
+            })
+            .catch(error => {
+                localStorage.removeItem('accessToken');
+            });
+        }
+
+        // Role selector functionality
+        document.querySelectorAll('.role-option').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.role-option').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                selectedRole = this.dataset.role;
+            });
+        });
+
+        // Login form submission
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if (!username || !password) {
+                showError('Please fill in all fields');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                document.getElementById('loginButton').disabled = true;
+                document.getElementById('loading').style.display = 'block';
+                hideMessages();
+                
+                // Make login request
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        role: selectedRole
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store access token
+                    localStorage.setItem('accessToken', data.access_token);
+                    
+                    // Show success message
+                    showSuccess('Login successful! Redirecting...');
+                    
+                    // Redirect based on role
+                    setTimeout(() => {
+                        if (selectedRole === 'cleaner') {
+                            window.location.href = '/staff-dashboard';
+                        } else {
+                            window.location.href = '/dashboard';
+                        }
+                    }, 1500);
+                    
+                } else {
+                    // Show error message
+                    showError(data.message || 'Login failed');
+                    document.getElementById('loginButton').disabled = false;
+                    document.getElementById('loading').style.display = 'none';
+                }
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('Network error. Please try again.');
+                document.getElementById('loginButton').disabled = false;
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+
+        // Show error message
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successElement = document.getElementById('successMessage');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+        }
+
+        // Hide all messages
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        // Add some demo functionality for testing
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-fill demo credentials based on role selection
+            document.querySelectorAll('.role-option').forEach(button => {
+                button.addEventListener('click', function() {
+                    const role = this.dataset.role;
+                    if (role === 'public') {
+                        document.getElementById('username').value = 'user1';
+                        document.getElementById('password').value = 'password123';
+                    } else if (role === 'cleaner') {
+                        document.getElementById('username').value = 'cleaner1';
+                        document.getElementById('password').value = 'password123';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

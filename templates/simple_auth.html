@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CleanFind - Simple Login</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px;
+        }
+
+        .auth-header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .auth-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .auth-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .auth-content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quick-login {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .quick-login h4 {
+            color: #6c757d;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .quick-login-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .quick-login-btn {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .quick-login-btn:hover {
+            background: #f8f9fa;
+            border-color: #4CAF50;
+        }
+
+        .role-badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .role-public {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .role-cleaner {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .role-admin {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .signup-link a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .auth-container {
+                margin: 10px;
+            }
+            
+            .auth-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1><i class="fas fa-restroom"></i> CleanFind</h1>
+            <p>Smart Toilet Hygiene Monitoring System</p>
+        </div>
+        
+        <div class="auth-content">
+            <div id="alert" class="alert"></div>
+            
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="login-email">Email or Username</label>
+                    <input type="text" id="login-email" required placeholder="Enter your email or username">
+                </div>
+
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required placeholder="Enter your password">
+                </div>
+
+                <button type="submit" class="btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login
+                </button>
+            </form>
+
+            <div class="loading" id="login-loading">
+                <div class="spinner"></div>
+                <p>Logging in...</p>
+            </div>
+
+            <div class="quick-login">
+                <h4>Quick Login (Demo)</h4>
+                <div class="quick-login-buttons">
+                    <button type="button" class="quick-login-btn" onclick="quickLogin('user1', 'password123')">
+                        <span>Public User</span>
+                        <span class="role-badge role-public">Public</span>
+                    </button>
+                    <button type="button" class="quick-login-btn" onclick="quickLogin('cleaner1', 'password123')">
+                        <span>Cleaning Staff</span>
+                        <span class="role-badge role-cleaner">Staff</span>
+                    </button>
+                    <button type="button" class="quick-login-btn" onclick="quickLogin('admin', 'admin123')">
+                        <span>System Admin</span>
+                        <span class="role-badge role-admin">Admin</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="signup-link">
+                Don't have an account? <a href="/auth">Sign up here</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            const loginForm = document.getElementById('login-form');
+            const loading = document.getElementById('login-loading');
+            const submitBtn = loginForm.querySelector('.btn');
+
+            // Show loading
+            loginForm.style.display = 'none';
+            loading.style.display = 'block';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Store token and user info
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    showAlert('Login successful! Redirecting...', 'success');
+                    
+                    // Redirect based on role from server response
+                    const userRole = data.user.role;
+                    setTimeout(() => {
+                        switch(userRole) {
+                            case 'public':
+                                window.location.href = '/dashboard';
+                                break;
+                            case 'cleaner':
+                                window.location.href = '/staff-dashboard';
+                                break;
+                            case 'admin':
+                                window.location.href = '/admin-dashboard';
+                                break;
+                            default:
+                                window.location.href = '/dashboard';
+                        }
+                    }, 1500);
+                } else {
+                    showAlert(data.error || 'Login failed', 'error');
+                    loginForm.style.display = 'block';
+                    loading.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                showAlert('Network error. Please try again.', 'error');
+                loginForm.style.display = 'block';
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+
+        function quickLogin(username, password) {
+            document.getElementById('login-email').value = username;
+            document.getElementById('login-password').value = password;
+            
+            // Auto-submit the form
+            document.getElementById('login-form').dispatchEvent(new Event('submit'));
+        }
+
+        // Add enter key support
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        handleLogin(e);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

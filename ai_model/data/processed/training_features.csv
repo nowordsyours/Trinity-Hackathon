@@ -1,0 +1,6 @@
+toilet_id,humidity,temperature,ammonia_level,co2_level,occupancy_duration,usage_count,cleaning_frequency,hygiene_score
+001,65.2,22.1,0.8,450,180,12,8,85
+002,68.5,21.8,1.2,520,240,15,6,72
+003,62.1,22.3,0.5,380,120,8,10,92
+004,70.8,21.9,1.8,650,300,20,4,45
+005,64.3,22.0,0.9,480,200,14,7,78

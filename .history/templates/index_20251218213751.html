@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Toilet Hygiene Prediction System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-color: #1f2937;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+            color: white;
+            padding: 30px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+
+        .sensor-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .sensor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .sensor-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .result-card {
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .clean { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .moderate { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .dirty { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+
+        .prediction-score {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status-badge {
+            font-size: 1.5rem;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+
+        .btn-predict {
+            background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+        }
+
+        .demo-buttons {
+            margin: 20px 0;
+        }
+
+        .demo-btn {
+            margin: 5px;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+
+        .feature-importance {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .explanation {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header">
+                <h1><i class="fas fa-toilet"></i> Smart Toilet Hygiene Prediction</h1>
+                <p class="mb-0">AI-Powered Hygiene Monitoring System | Hackathon Demo</p>
+            </div>
+
+            <div class="container-fluid p-4">
+                <!-- Demo Buttons -->
+                <div class="demo-buttons text-center">
+                    <h5 class="mb-3">Quick Demo Scenarios</h5>
+                    <button class="btn btn-success demo-btn" onclick="loadDemo('clean')">
+                        <i class="fas fa-check-circle"></i> Clean Toilet
+                    </button>
+                    <button class="btn btn-warning demo-btn" onclick="loadDemo('moderate')">
+                        <i class="fas fa-exclamation-triangle"></i> Moderate Toilet
+                    </button>
+                    <button class="btn btn-danger demo-btn" onclick="loadDemo('dirty')">
+                        <i class="fas fa-times-circle"></i> Dirty Toilet
+                    </button>
+                </div>
+
+                <!-- Sensor Inputs -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="sensor-card">
+                            <div class="sensor-icon" style="color: #ef4444;">
+                                <i class="fas fa-wind"></i>
+                            </div>
+                            <h5>Gas Sensors</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Ammonia (ppm)</label>
+                                <input type="range" class="form-range" id="ammonia" min="0" max="100" value="45" oninput="updateValue('ammonia')">
+                                <small class="text-muted">Value: <span id="ammonia-value">45</span></small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Methane (ppm)</label>
+                                <input type="range" class="form-range" id="methane" min="0" max="100" value="35" oninput="updateValue('methane')">
+                                <small class="text-muted">Value: <span id="methane-value">35</span></small>
+                            </div>
+                        </div>
+
+                        <div class="sensor-card">
+                            <div class="sensor-icon" style="color: #3b82f6;">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <h5>Water Quality</h5>
+                            <div class="mb-3">
+                                <label class="form-label">pH Level</label>
+                                <input type="range" class="form-range" id="ph" min="4" max="9" step="0.1" value="6.8" oninput="updateValue('ph')">
+                                <small class="text-muted">Value: <span id="ph-value">6.8</span></small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Turbidity (NTU)</label>
+                                <input type="range" class="form-range" id="turbidity" min="0" max="500" value="85" oninput="updateValue('turbidity')">
+                                <small class="text-muted">Value: <span id="turbidity-value">85</span></small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Water Flow (L/min)</label>
+                                <input type="range" class="form-range" id="water_flow" min="0" max="30" value="15" oninput="updateValue('water_flow')">
+                                <small class="text-muted">Value: <span id="water_flow-value">15</span></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="sensor-card">
+                            <div class="sensor-icon" style="color: #10b981;">
+                                <i class="fas fa-thermometer-half"></i>
+                            </div>
+                            <h5>Environmental</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Temperature (°C)</label>
+                                <input type="range" class="form-range" id="temperature" min="15" max="45" value="24" oninput="updateValue('temperature')">
+                                <small class="text-muted">Value: <span id="temperature-value">24</span></small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Humidity (%)</label>
+                                <input type="range" class="form-range" id="humidity" min="30" max="90" value="58" oninput="updateValue('humidity')">
+                                <small class="text-muted">Value: <span id="humidity-value">58</span></small>
+                            </div>
+                        </div>
+
+                        <div class="sensor-card">
+                            <div class="sensor-icon" style="color: #f59e0b;">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h5>Usage Metrics</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Footfall (people)</label>
+                                <input type="range" class="form-range" id="footfall" min="0" max="50" value="18" oninput="updateValue('footfall')">
+                                <small class="text-muted">Value: <span id="footfall-value">18</span></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Predict Button -->
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary btn-predict btn-lg" onclick="predictHygiene()">
+                        <i class="fas fa-brain"></i> Predict Hygiene Level
+                    </button>
+                </div>
+
+                <!-- Loading -->
+                <div class="loading" id="loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">AI Model Analyzing Sensor Data...</p>
+                </div>
+
+                <!-- Results -->
+                <div id="results" style="display: none;">
+                    <div class="result-card" id="result-card">
+                        <div class="prediction-score" id="score">--</div>
+                        <div class="status-badge" id="status">--</div>
+                        <div class="explanation" id="explanation">
+                            Adjust sensor values and click predict to get results
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature Importance -->
+                <div class="feature-importance">
+                    <h5><i class="fas fa-chart-bar"></i> AI Model Insights</h5>
+                    <p class="text-muted">Top factors affecting hygiene prediction:</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Ammonia Levels</span>
+                                <span class="badge bg-danger">24%</span>
+                            </div>
+                            <div class="progress mb-3">
+                                <div class="progress-bar bg-danger" style="width: 24%"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Water Flow</span>
+                                <span class="badge bg-primary">18%</span>
+                            </div>
+                            <div class="progress mb-3">
+                                <div class="progress-bar bg-primary" style="width: 18%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Methane Levels</span>
+                                <span class="badge bg-warning">17%</span>
+                            </div>
+                            <div class="progress mb-3">
+                                <div class="progress-bar bg-warning" style="width: 17%"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>pH & Turbidity</span>
+                                <span class="badge bg-info">23%</span>
+                            </div>
+                            <div class="progress mb-3">
+                                <div class="progress-bar bg-info" style="width: 23%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function updateValue(sensor) {
+            const slider = document.getElementById(sensor);
+            const valueSpan = document.getElementById(sensor + '-value');
+            valueSpan.textContent = slider.value;
+        }
+
+        function getSensorData() {
+            return {
+                ammonia: parseFloat(document.getElementById('ammonia').value),
+                methane: parseFloat(document.getElementById('methane').value),
+                humidity: parseFloat(document.getElementById('humidity').value),
+                temperature: parseFloat(document.getElementById('temperature').value),
+                footfall: parseFloat(document.getElementById('footfall').value),
+                water_flow: parseFloat(document.getElementById('water_flow').value),
+                ph: parseFloat(document.getElementById('ph').value),
+                turbidity: parseFloat(document.getElementById('turbidity').value)
+            };
+        }
+
+        function predictHygiene() {
+            const data = getSensorData();
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('results').style.display = 'block';
+                
+                if (result.error) {
+                    alert('Error: ' + result.error);
+                    return;
+                }
+                
+                // Update results
+                document.getElementById('score').textContent = result.hygiene_score.toFixed(1);
+                document.getElementById('status').textContent = result.hygiene_status;
+                document.getElementById('explanation').textContent = result.explanation;
+                
+                // Update card styling
+                const card = document.getElementById('result-card');
+                card.className = 'result-card';
+                
+                if (result.hygiene_status === 'Clean') {
+                    card.classList.add('clean');
+                } else if (result.hygiene_status === 'Moderate') {
+                    card.classList.add('moderate');
+                } else {
+                    card.classList.add('dirty');
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                alert('Error: ' + error.message);
+            });
+        }
+
+        function loadDemo(scenario) {
+            fetch('/demo/' + scenario)
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) {
+                    alert('Error: ' + result.error);
+                    return;
+                }
+                
+                // Update sliders with demo values
+                const scenarios = {
+                    clean: {
+                        ammonia: 12, methane: 8, humidity: 52, temperature: 21,
+                        footfall: 5, water_flow: 22, ph: 7.2, turbidity: 15
+                    },
+                    dirty: {
+                        ammonia: 95, methane: 85, humidity: 75, temperature: 32,
+                        footfall: 45, water_flow: 2, ph: 5.5, turbidity: 350
+                    },
+                    moderate: {
+                        ammonia: 45, methane: 35, humidity: 58, temperature: 24,
+                        footfall: 18, water_flow: 15, ph: 6.8, turbidity: 85
+                    }
+                };
+                
+                const values = scenarios[scenario];
+                for (let sensor in values) {
+                    document.getElementById(sensor).value = values[sensor];
+                    updateValue(sensor);
+                }
+                
+                // Auto-predict
+                predictHygiene();
+            })
+            .catch(error => {
+                alert('Error loading demo: ' + error.message);
+            });
+        }
+
+        // Initialize with moderate values
+        window.onload = function() {
+            // Update all value displays
+            const sensors = ['ammonia', 'methane', 'humidity', 'temperature', 'footfall', 'water_flow', 'ph', 'turbidity'];
+            sensors.forEach(sensor => updateValue(sensor));
+        };
+    </script>
+</body>
+</html>

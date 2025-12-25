@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CleanFind - Public Toilet Finder</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #4a5568;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .map-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #map {
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .dial-card, .status-card, .updates-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .hygiene-dial {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+
+        .dial-background {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 180deg,
+                #ef4444 0deg,
+                #f59e0b 60deg,
+                #10b981 120deg,
+                #10b981 240deg,
+                #f59e0b 300deg,
+                #ef4444 360deg
+            );
+            padding: 10px;
+        }
+
+        .dial-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .dial-needle {
+            position: absolute;
+            width: 4px;
+            height: 80px;
+            background: #2d3748;
+            top: 20px;
+            left: 50%;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(0deg);
+            transition: transform 0.5s ease;
+            border-radius: 2px;
+        }
+
+        .dial-center {
+            width: 20px;
+            height: 20px;
+            background: #2d3748;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .dial-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-top: 1rem;
+        }
+
+        .dial-status {
+            font-size: 1rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .status-clean {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .status-moderate {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .status-dirty {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .status-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .update-item {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid #4a5568;
+            background: #f7fafc;
+            border-radius: 0 10px 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .update-item:hover {
+            background: #edf2f7;
+            transform: translateX(5px);
+        }
+
+        .update-time {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-bottom: 0.5rem;
+        }
+
+        .update-content {
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        .toilet-popup {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            min-width: 250px;
+        }
+
+        .popup-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .popup-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .popup-info {
+            font-size: 0.9rem;
+            color: #4a5568;
+            margin: 0.25rem 0;
+        }
+
+        .popup-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 1rem;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .popup-button:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            color: #718096;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .sidebar {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                display: grid;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+            }
+            
+            .logo {
+                font-size: 1.5rem;
+            }
+            
+            .hygiene-dial {
+                width: 150px;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-restroom"></i>
+            CleanFind
+        </div>
+        <div class="user-info">
+            <span id="userName">Loading...</span>
+            <button onclick="logout()" style="background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="map-section">
+            <h2 class="section-title">
+                <i class="fas fa-map-marked-alt"></i>
+                Nearby Toilets
+            </h2>
+            <div id="map"></div>
+        </div>
+
+        <div class="sidebar">
+            <div class="dial-card">
+                <h3 class="section-title">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Overall Hygiene
+                </h3>
+                <div class="hygiene-dial">
+                    <div class="dial-background">
+                        <div class="dial-inner">
+                            <div class="dial-needle" id="dialNeedle"></div>
+                            <div class="dial-center"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dial-value" id="dialValue">--</div>
+                <div class="dial-status" id="dialStatus">Loading...</div>
+            </div>
+
+            <div class="status-card">
+                <h3 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Status Summary
+                </h3>
+                <div id="statusSummary">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Loading toilet data...
+                    </div>
+                </div>
+            </div>
+
+            <div class="updates-card">
+                <h3 class="section-title">
+                    <i class="fas fa-bell"></i>
+                    Real-time Updates
+                </h3>
+                <div id="realTimeUpdates">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Waiting for updates...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <div id="notificationContent"></div>
+    </div>
+
+    <script>
+        // Global variables
+        let map;
+        let toilets = [];
+        let accessToken = localStorage.getItem('accessToken');
+        let currentUser = null;
+
+        // Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+            if (!accessToken) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            initializeApp();
+        });
+
+        // Initialize application
+        async function initializeApp() {
+            try {
+                // Get user profile
+                const userResponse = await fetch('/api/user/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (!userResponse.ok) {
+                    throw new Error('Authentication failed');
+                }
+
+                currentUser = await userResponse.json();
+                document.getElementById('userName').textContent = currentUser.name;
+
+                // Initialize map
+                initializeMap();
+                
+                // Load toilet data
+                await loadToiletData();
+                
+                // Start real-time updates
+                startRealTimeUpdates();
+                
+            } catch (error) {
+                console.error('Initialization error:', error);
+                localStorage.removeItem('accessToken');
+                window.location.href = '/login';
+            }
+        }
+
+        // Initialize map
+        function initializeMap() {
+            // Default to New Delhi coordinates
+            map = L.map('map').setView([28.6139, 77.2090], 15);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add user location if available
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    
+                    map.setView([userLat, userLng], 16);
+                    
+                    // Add user location marker
+                    L.marker([userLat, userLng], {
+                        icon: L.divIcon({
+                            className: 'user-location-marker',
+                            html: '<div style="background: #667eea; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"></div>',
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10]
+                        })
+                    }).addTo(map).bindPopup('Your Location');
+                });
+            }
+        }
+
+        // Load toilet data
+        async function loadToiletData() {
+            try {
+                const response = await fetch('/api/toilets', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load toilet data');
+                }
+
+                const data = await response.json();
+                toilets = data.toilets;
+                
+                // Add markers to map
+                addToiletMarkers();
+                
+                // Update status summary
+                updateStatusSummary(data.summary);
+                
+                // Update hygiene dial
+                updateHygieneDial(data.summary);
+                
+            } catch (error) {
+                console.error('Error loading toilet data:', error);
+                showNotification('Failed to load toilet data', 'error');
+            }
+        }
+
+        // Add toilet markers to map
+        function addToiletMarkers() {
+            toilets.forEach(toilet => {
+                const markerColor = getMarkerColor(toilet.status);
+                const markerIcon = getMarkerIcon(toilet.status);
+                
+                const marker = L.marker([toilet.lat, toilet.lng], {
+                    icon: L.divIcon({
+                        className: 'toilet-marker',
+                        html: `<div style="background: ${markerColor}; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">${markerIcon}</div>`,
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
+                    })
+                });
+
+                // Create popup content
+                const popupContent = createPopupContent(toilet);
+                marker.bindPopup(popupContent);
+                
+                marker.addTo(map);
+            });
+        }
+
+        // Get marker color based on status
+        function getMarkerColor(status) {
+            switch (status.toLowerCase()) {
+                case 'clean': return '#10b981';
+                case 'moderate': return '#f59e0b';
+                case 'dirty': return '#ef4444';
+                default: return '#6b7280';
+            }
+        }
+
+        // Get marker icon based on status
+        function getMarkerIcon(status) {
+            switch (status.toLowerCase()) {
+                case 'clean': return '✓';
+                case 'moderate': return '!';
+                case 'dirty': return '✗';
+                default: return '?';
+            }
+        }
+
+        // Create popup content
+        function createPopupContent(toilet) {
+            const lastCleaned = new Date(toilet.last_cleaned).toLocaleString();
+            const nextScheduled = new Date(toilet.next_scheduled).toLocaleString();
+            
+            return `
+                <div class="toilet-popup">
+                    <div class="popup-title">
+                        <i class="fas fa-restroom"></i>
+                        ${toilet.name}
+                    </div>
+                    <div class="popup-status" style="background: ${getStatusColor(toilet.status)}20; color: ${getStatusColor(toilet.status)};">
+                        <i class="fas fa-shield-alt"></i>
+                        ${toilet.status} (${toilet.hygiene_score}/100)
+                    </div>
+                    <div class="popup-info">
+                        <i class="fas fa-map-marker-alt"></i>
+                        ${toilet.address}
+                    </div>
+                    <div class="popup-info">
+                        <i class="fas fa-clock"></i>
+                        Last cleaned: ${lastCleaned}
+                    </div>
+                    <div class="popup-info">
+                        <i class="fas fa-calendar-check"></i>
+                        Next scheduled: ${nextScheduled}
+                    </div>
+                    ${toilet.water_available ? '<div class="popup-info"><i class="fas fa-tint text-blue-500"></i> Water available</div>' : '<div class="popup-info"><i class="fas fa-tint text-red-500"></i> No water</div>'}
+                    ${toilet.soap_available ? '<div class="popup-info"><i class="fas fa-pump-soap text-green-500"></i> Soap available</div>' : '<div class="popup-info"><i class="fas fa-pump-soap text-red-500"></i> No soap</div>'}
+                    <button class="popup-button" onclick="showToiletDetails('${toilet.id}')">
+                        <i class="fas fa-info-circle"></i>
+                        View Details
+                    </button>
+                </div>
+            `;
+        }
+
+        // Get status color
+        function getStatusColor(status) {
+            switch (status.toLowerCase()) {
+                case 'clean': return '#10b981';
+                case 'moderate': return '#f59e0b';
+                case 'dirty': return '#ef4444';
+                default: return '#6b7280';
+            }
+        }
+
+        // Update status summary
+        function updateStatusSummary(summary) {
+            const statusSummary = document.getElementById('statusSummary');
+            
+            statusSummary.innerHTML = `
+                <div class="status-item status-clean">
+                    <div>
+                        <i class="fas fa-check-circle"></i>
+                        Clean
+                    </div>
+                    <div><strong>${summary.clean}</strong></div>
+                </div>
+                <div class="status-item status-moderate">
+                    <div>
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Moderate
+                    </div>
+                    <div><strong>${summary.moderate}</strong></div>
+                </div>
+                <div class="status-item status-dirty">
+                    <div>
+                        <i class="fas fa-times-circle"></i>
+                        Dirty
+                    </div>
+                    <div><strong>${summary.dirty}</strong></div>
+                </div>
+            `;
+        }
+
+        // Update hygiene dial
+        function updateHygieneDial(summary) {
+            const total = summary.clean + summary.moderate + summary.dirty;
+            const averageScore = (summary.clean * 85 + summary.moderate * 50 + summary.dirty * 20) / total;
+            
+            // Update dial value
+            document.getElementById('dialValue').textContent = Math.round(averageScore);
+            
+            // Update dial status
+            let status, color;
+            if (averageScore >= 70) {
+                status = 'Good';
+                color = '#10b981';
+            } else if (averageScore >= 40) {
+                status = 'Fair';
+                color = '#f59e0b';
+            } else {
+                status = 'Poor';
+                color = '#ef4444';
+            }
+            
+            document.getElementById('dialStatus').textContent = status;
+            document.getElementById('dialStatus').style.color = color;
+            
+            // Update needle position
+            const needle = document.getElementById('dialNeedle');
+            const rotation = (averageScore / 100) * 180 - 90; // -90 to 90 degrees
+            needle.style.transform = `translateX(-50%) rotate(${rotation}deg)`;
+        }
+
+        // Start real-time updates
+        function startRealTimeUpdates() {
+            // Fetch updates every 10 seconds
+            setInterval(async () => {
+                try {
+                    const response = await fetch('/api/updates', {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        updateRealTimeUpdates(data.updates);
+                    }
+                } catch (error) {
+                    console.error('Error fetching updates:', error);
+                }
+            }, 10000);
+        }
+
+        // Update real-time updates display
+        function updateRealTimeUpdates(updates) {
+            const updatesContainer = document.getElementById('realTimeUpdates');
+            
+            if (!updates || updates.length === 0) {
+                updatesContainer.innerHTML = '<div style="text-align: center; color: #718096;">No recent updates</div>';
+                return;
+            }
+            
+            updatesContainer.innerHTML = updates.map(update => {
+                const timeAgo = getTimeAgo(new Date(update.timestamp));
+                let icon, color;
+                
+                if (update.type === 'cleaned') {
+                    icon = 'fa-broom';
+                    color = '#10b981';
+                } else {
+                    icon = 'fa-exclamation-triangle';
+                    color = '#f59e0b';
+                }
+                
+                return `
+                    <div class="update-item" style="border-left-color: ${color};">
+                        <div class="update-time">
+                            <i class="fas ${icon}" style="color: ${color};"></i>
+                            ${timeAgo}
+                        </div>
+                        <div class="update-content">
+                            ${update.toilet_name} - ${update.new_status}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Show notification for new updates
+            if (updates.length > 0) {
+                const latestUpdate = updates[0];
+                showNotification(`${latestUpdate.toilet_name} is now ${latestUpdate.new_status}`, 'info');
+            }
+        }
+
+        // Get time ago string
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            return `${days}d ago`;
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const content = document.getElementById('notificationContent');
+            
+            content.innerHTML = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+
+        // Show toilet details
+        function showToiletDetails(toiletId) {
+            const toilet = toilets.find(t => t.id === toiletId);
+            if (toilet) {
+                showNotification(`Selected: ${toilet.name} - ${toilet.status}`, 'info');
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('accessToken');
+            window.location.href = '/login';
+        }
+
+        // Handle errors
+        function handleError(error) {
+            console.error('Error:', error);
+            showNotification('An error occurred. Please try again.', 'error');
+        }
+    </script>
+</body>
+</html>

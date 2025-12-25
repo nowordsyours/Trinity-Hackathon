@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚽 Real-Time Smart Toilet Monitoring Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            margin: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-online {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .sensor-card {
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sensor-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .sensor-unit {
+            font-size: 1rem;
+            color: #666;
+        }
+        
+        .sensor-status {
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .hygiene-score {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 20px 0;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hygiene-status {
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 15px 30px;
+            border-radius: 25px;
+            display: inline-block;
+            margin: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .status-clean {
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+            color: white;
+        }
+        
+        .status-moderate {
+            background: linear-gradient(45deg, #FF9800, #FFC107);
+            color: white;
+        }
+        
+        .status-dirty {
+            background: linear-gradient(45deg, #f44336, #E91E63);
+            color: white;
+        }
+        
+        .alerts-section {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .alert-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        
+        .alert-critical {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .timestamp {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #666;
+            margin: 10px 0;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
+            color: #666;
+        }
+        
+        .feature-importance {
+            margin: 20px 0;
+        }
+        
+        .feature-bar {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .feature-name {
+            width: 120px;
+            font-weight: bold;
+        }
+        
+        .feature-progress {
+            flex: 1;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+        
+        .feature-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .feature-value {
+            width: 50px;
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .sensor-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚽 Smart Toilet Hygiene Monitoring</h1>
+            <div class="status-indicator status-online">
+                🟢 LIVE - Real-time Monitoring Active
+            </div>
+            <div class="timestamp" id="timestamp">Connecting...</div>
+        </div>
+        
+        <div id="loading" class="loading">
+            📡 Connecting to IoT sensors...<br>
+            <small>This may take a few seconds...</small>
+        </div>
+        
+        <div id="dashboard" style="display: none;">
+            <!-- Sensor Cards -->
+            <div class="dashboard-grid" id="sensor-cards">
+                <!-- Dynamic sensor cards will be inserted here -->
+            </div>
+            
+            <!-- Hygiene Score and Status -->
+            <div class="card">
+                <h2 style="text-align: center; margin-bottom: 20px;">🎯 Hygiene Assessment</h2>
+                <div class="hygiene-score" id="hygiene-score">--</div>
+                <div style="text-align: center;">
+                    <span class="hygiene-status" id="hygiene-status">Loading...</span>
+                </div>
+                <div style="text-align: center; margin-top: 15px;">
+                    <small id="confidence">Confidence: --%</small>
+                </div>
+            </div>
+            
+            <!-- Alerts Section -->
+            <div class="card">
+                <h2>🚨 Real-time Alerts</h2>
+                <div id="alerts-container">
+                    <p style="text-align: center; color: #666;">No active alerts</p>
+                </div>
+            </div>
+            
+            <!-- Real-time Charts -->
+            <div class="card">
+                <h2>📊 Hygiene Score Trend</h2>
+                <div class="chart-container">
+                    <canvas id="hygiene-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Feature Importance -->
+            <div class="card">
+                <h2>🔍 Feature Importance Analysis</h2>
+                <div class="feature-importance" id="feature-importance">
+                    <!-- Dynamic feature importance bars -->
+                </div>
+            </div>
+            
+            <!-- Sensor Trends -->
+            <div class="card">
+                <h2>📈 Sensor Trends (Last Hour)</h2>
+                <div class="chart-container">
+                    <canvas id="sensor-trends-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let hygieneChart, sensorTrendsChart;
+        let predictionHistory = [];
+        let sensorHistory = [];
+        
+        // Initialize charts
+        function initCharts() {
+            // Hygiene Score Chart
+            const ctx1 = document.getElementById('hygiene-chart').getContext('2d');
+            hygieneChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Hygiene Score',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Sensor Trends Chart
+            const ctx2 = document.getElementById('sensor-trends-chart').getContext('2d');
+            sensorTrendsChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Ammonia',
+                            data: [],
+                            borderColor: '#f44336',
+                            backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Methane',
+                            data: [],
+                            borderColor: '#9C27B0',
+                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Water Flow',
+                            data: [],
+                            borderColor: '#2196F3',
+                            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update dashboard with real-time data
+        function updateDashboard(data) {
+            // Update timestamp
+            document.getElementById('timestamp').textContent = 
+                `🕐 Last Updated: ${new Date(data.timestamp).toLocaleTimeString()}`;
+            
+            // Update sensor cards
+            updateSensorCards(data.sensors);
+            
+            // Update hygiene score and status
+            if (data.prediction) {
+                document.getElementById('hygiene-score').textContent = 
+                    Math.round(data.prediction.hygiene_score);
+                
+                const statusElement = document.getElementById('hygiene-status');
+                statusElement.textContent = data.prediction.hygiene_status;
+                statusElement.className = `hygiene-status status-${data.prediction.hygiene_status.toLowerCase()}`;
+                
+                document.getElementById('confidence').textContent = 
+                    `Confidence: ${Math.round(data.prediction.confidence * 100)}%`;
+                
+                // Update feature importance
+                updateFeatureImportance(data.prediction.feature_importance);
+            }
+            
+            // Update alerts
+            updateAlerts(data.alerts || []);
+            
+            // Update charts
+            updateCharts(data);
+        }
+        
+        function updateSensorCards(sensors) {
+            const container = document.getElementById('sensor-cards');
+            const sensorInfo = {
+                'ammonia': { unit: 'ppm', max: 100, color: '#f44336' },
+                'methane': { unit: 'ppm', max: 100, color: '#9C27B0' },
+                'humidity': { unit: '%', max: 100, color: '#2196F3' },
+                'temperature': { unit: '°C', max: 45, color: '#FF9800' },
+                'footfall': { unit: 'people/hr', max: 50, color: '#4CAF50' },
+                'water_flow': { unit: 'L/min', max: 30, color: '#00BCD4' },
+                'ph': { unit: 'pH', max: 9, color: '#E91E63' },
+                'turbidity': { unit: 'NTU', max: 500, color: '#795548' }
+            };
+            
+            container.innerHTML = '';
+            
+            Object.entries(sensors).forEach(([sensor, value]) => {
+                const info = sensorInfo[sensor];
+                const percentage = (value / info.max) * 100;
+                const status = getSensorStatus(sensor, value);
+                
+                const card = document.createElement('div');
+                card.className = 'card sensor-card';
+                card.innerHTML = `
+                    <h3>${sensor.charAt(0).toUpperCase() + sensor.slice(1)}</h3>
+                    <div class="sensor-value" style="color: ${info.color}">
+                        ${value.toFixed(1)}
+                    </div>
+                    <div class="sensor-unit">${info.unit}</div>
+                    <div class="sensor-status">${status}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percentage}%; background: ${info.color}"></div>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+        
+        function getSensorStatus(sensor, value) {
+            // Simple status logic - can be enhanced
+            if (sensor === 'ammonia' && value > 60) return '❌ High';
+            if (sensor === 'ammonia' && value > 30) return '⚠️ Medium';
+            if (sensor === 'ammonia') return '✅ Low';
+            
+            if (sensor === 'methane' && value > 50) return '❌ High';
+            if (sensor === 'methane' && value > 25) return '⚠️ Medium';
+            if (sensor === 'methane') return '✅ Low';
+            
+            if (sensor === 'water_flow' && value < 5) return '❌ Low';
+            if (sensor === 'water_flow' && value < 15) return '⚠️ Medium';
+            if (sensor === 'water_flow') return '✅ Good';
+            
+            return '✅ Normal';
+        }
+        
+        function updateAlerts(alerts) {
+            const container = document.getElementById('alerts-container');
+            
+            if (alerts.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">No active alerts</p>';
+                return;
+            }
+            
+            container.innerHTML = alerts.map(alert => `
+                <div class="alert-item alert-${alert.type}">
+                    <strong>${alert.type.toUpperCase()}:</strong> ${alert.message}
+                </div>
+            `).join('');
+        }
+        
+        function updateFeatureImportance(importance) {
+            const container = document.getElementById('feature-importance');
+            
+            if (!importance) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">No feature importance data available</p>';
+                return;
+            }
+            
+            const maxImportance = Math.max(...Object.values(importance));
+            
+            container.innerHTML = Object.entries(importance)
+                .sort(([,a], [,b]) => b - a)
+                .map(([feature, value]) => {
+                    const percentage = (value / maxImportance) * 100;
+                    return `
+                        <div class="feature-bar">
+                            <div class="feature-name">${feature}</div>
+                            <div class="feature-progress">
+                                <div class="feature-fill" style="width: ${percentage}%"></div>
+                            </div>
+                            <div class="feature-value">${(value * 100).toFixed(1)}%</div>
+                        </div>
+                    `;
+                }).join('');
+        }
+        
+        function updateCharts(data) {
+            if (!data.prediction) return;
+            
+            // Update hygiene score chart
+            const timestamp = new Date(data.timestamp).toLocaleTimeString();
+            
+            if (hygieneChart.data.labels.length > 20) {
+                hygieneChart.data.labels.shift();
+                hygieneChart.data.datasets[0].data.shift();
+            }
+            
+            hygieneChart.data.labels.push(timestamp);
+            hygieneChart.data.datasets[0].data.push(data.prediction.hygiene_score);
+            hygieneChart.update('none');
+            
+            // Update sensor trends chart
+            if (sensorTrendsChart.data.labels.length > 20) {
+                sensorTrendsChart.data.labels.shift();
+                sensorTrendsChart.data.datasets.forEach(dataset => {
+                    dataset.data.shift();
+                });
+            }
+            
+            sensorTrendsChart.data.labels.push(timestamp);
+            sensorTrendsChart.data.datasets[0].data.push(data.sensors.ammonia);
+            sensorTrendsChart.data.datasets[1].data.push(data.sensors.methane);
+            sensorTrendsChart.data.datasets[2].data.push(data.sensors.water_flow);
+            sensorTrendsChart.update('none');
+        }
+        
+        // Fetch real-time data
+        async function fetchRealTimeData() {
+            try {
+                const response = await fetch('/real-time-data');
+                const data = await response.json();
+                
+                // Hide loading, show dashboard
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                
+                updateDashboard(data);
+            } catch (error) {
+                console.error('Error fetching real-time data:', error);
+                document.getElementById('loading').innerHTML = 
+                    '❌ Connection failed. Retrying...<br><small>Check if the server is running</small>';
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            fetchRealTimeData();
+            
+            // Update every 3 seconds
+            setInterval(fetchRealTimeData, 3000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - Smart Toilet Hygiene</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            max-width: 1400px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+            color: white;
+            padding: 30px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 15px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 15px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-pills .nav-link {
+            border-radius: 20px;
+            margin: 5px;
+            font-weight: 600;
+        }
+
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+        }
+
+        .prediction-history {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .prediction-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border-left: 4px solid;
+        }
+
+        .prediction-clean {
+            background: rgba(16, 185, 129, 0.1);
+            border-left-color: var(--success-color);
+        }
+
+        .prediction-moderate {
+            background: rgba(245, 158, 11, 0.1);
+            border-left-color: var(--warning-color);
+        }
+
+        .prediction-dirty {
+            background: rgba(239, 68, 68, 0.1);
+            border-left-color: var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="dashboard-container">
+            <!-- Header -->
+            <div class="header">
+                <h1><i class="fas fa-chart-line"></i> Analytics Dashboard</h1>
+                <p class="mb-0">Smart Toilet Hygiene Prediction System - Real-time Analytics</p>
+                <a href="/" class="btn btn-light mt-3">
+                    <i class="fas fa-arrow-left"></i> Back to Predictor
+                </a>
+            </div>
+
+            <div class="container-fluid p-4">
+                <!-- Key Metrics -->
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="metric-card text-center">
+                            <div class="metric-icon" style="color: var(--success-color);">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="metric-value" id="clean-count">0</div>
+                            <div class="text-muted">Clean Toilets</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card text-center">
+                            <div class="metric-icon" style="color: var(--warning-color);">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="metric-value" id="moderate-count">0</div>
+                            <div class="text-muted">Moderate Toilets</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card text-center">
+                            <div class="metric-icon" style="color: var(--danger-color);">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div class="metric-value" id="dirty-count">0</div>
+                            <div class="text-muted">Dirty Toilets</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card text-center">
+                            <div class="metric-icon" style="color: var(--primary-color);">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="metric-value" id="accuracy-rate">62.4%</div>
+                            <div class="text-muted">Model Accuracy</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h5><i class="fas fa-chart-pie"></i> Hygiene Status Distribution</h5>
+                            <canvas id="statusChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h5><i class="fas fa-chart-bar"></i> Feature Importance</h5>
+                            <canvas id="featureChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Real-time Monitoring -->
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="chart-container">
+                            <h5><i class="fas fa-heartbeat"></i> Real-time Hygiene Score Trend</h5>
+                            <canvas id="trendChart" width="800" height="300"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="chart-container">
+                            <h5><i class="fas fa-history"></i> Recent Predictions</h5>
+                            <div class="prediction-history" id="predictionHistory">
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-clock fa-2x mb-2"></i>
+                                    <p>No recent predictions</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sensor Ranges -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="chart-container">
+                            <h5><i class="fas fa-sliders-h"></i> Sensor Value Ranges</h5>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <h6>Gas Sensors</h6>
+                                    <small class="text-muted">Ammonia: 0-100 ppm<br>Methane: 0-100 ppm</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h6>Environmental</h6>
+                                    <small class="text-muted">Temperature: 15-45°C<br>Humidity: 30-90%</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h6>Water Quality</h6>
+                                    <small class="text-muted">pH: 4-9<br>Turbidity: 0-500 NTU<br>Flow: 0-30 L/min</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h6>Usage</h6>
+                                    <small class="text-muted">Footfall: 0-50 people</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize charts
+        function initializeCharts() {
+            // Status Distribution Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Clean', 'Moderate', 'Dirty'],
+                    datasets: [{
+                        data: [33.6, 66.0, 0.4],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Feature Importance Chart
+            const featureCtx = document.getElementById('featureChart').getContext('2d');
+            new Chart(featureCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Ammonia', 'Water Flow', 'Methane', 'pH', 'Turbidity', 'Footfall'],
+                    datasets: [{
+                        label: 'Importance (%)',
+                        data: [23.9, 18.2, 16.9, 11.6, 11.6, 9.2],
+                        backgroundColor: ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#f97316'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 30
+                        }
+                    }
+                }
+            });
+
+            // Trend Chart (simulated data)
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            const hours = [];
+            const scores = [];
+            for (let i = 0; i < 24; i++) {
+                hours.push(i + ':00');
+                scores.push(Math.random() * 30 + 65); // Simulated scores
+            }
+
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: hours,
+                    datasets: [{
+                        label: 'Average Hygiene Score',
+                        data: scores,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 50,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // Simulate real-time updates
+        function simulateRealTimeData() {
+            const cleanCount = Math.floor(Math.random() * 10) + 25;
+            const moderateCount = Math.floor(Math.random() * 15) + 35;
+            const dirtyCount = Math.floor(Math.random() * 5) + 1;
+            
+            document.getElementById('clean-count').textContent = cleanCount;
+            document.getElementById('moderate-count').textContent = moderateCount;
+            document.getElementById('dirty-count').textContent = dirtyCount;
+
+            // Add sample predictions to history
+            const history = document.getElementById('predictionHistory');
+            const predictions = [
+                { score: 87.3, status: 'Clean', time: '2 min ago' },
+                { score: 72.1, status: 'Moderate', time: '5 min ago' },
+                { score: 91.5, status: 'Clean', time: '8 min ago' },
+                { score: 68.9, status: 'Moderate', time: '12 min ago' },
+                { score: 45.2, status: 'Dirty', time: '15 min ago' }
+            ];
+
+            history.innerHTML = predictions.map(pred => `
+                <div class="prediction-item prediction-${pred.status.toLowerCase()}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${pred.status}</strong>
+                            <div class="small text-muted">Score: ${pred.score}</div>
+                        </div>
+                        <div class="small text-muted">${pred.time}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            initializeCharts();
+            simulateRealTimeData();
+            
+            // Update data every 30 seconds
+            setInterval(simulateRealTimeData, 30000);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+[
+  {
+    "id": "staff_001",
+    "name": "John Murphy",
+    "username": "john.murphy",
+    "password": "secure123",
+    "email": "john.murphy@cleaningservices.ie",
+    "phone": "+353 87 123 4567",
+    "role": "Senior Cleaner",
+    "assigned_toilets": ["toilet_001", "toilet_003"],
+    "shift": "Morning",
+    "status": "Active",
+    "last_login": "2024-01-15T08:00:00Z"
+  },
+  {
+    "id": "staff_002",
+    "name": "Mary O'Brien",
+    "username": "mary.obrien",
+    "password": "clean456",
+    "email": "mary.obrien@cleaningservices.ie",
+    "phone": "+353 87 234 5678",
+    "role": "Cleaner",
+    "assigned_toilets": ["toilet_002", "toilet_005"],
+    "shift": "Afternoon",
+    "status": "Active",
+    "last_login": "2024-01-15T12:00:00Z"
+  },
+  {
+    "id": "staff_003",
+    "name": "Patrick Kelly",
+    "username": "patrick.kelly",
+    "password": "hygiene789",
+    "email": "patrick.kelly@cleaningservices.ie",
+    "phone": "+353 87 345 6789",
+    "role": "Cleaner",
+    "assigned_toilets": ["toilet_004"],
+    "shift": "Evening",
+    "status": "Active",
+    "last_login": "2024-01-15T06:30:00Z"
+  }
+]

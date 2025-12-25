@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CleanFind - Smart Toilet Finder</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #4a5568;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 1rem;
+            padding: 1rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .map-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            color: #2d3748;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #map {
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .toilet-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .toilet-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .toilet-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .toilet-icon {
+            font-size: 2rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .toilet-name {
+            font-weight: bold;
+            color: #2d3748;
+            font-size: 1.1rem;
+        }
+
+        .hygiene-meter {
+            margin: 1rem 0;
+        }
+
+        .meter-container {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .meter-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .meter-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .meter-text {
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .toilet-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: #4a5568;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-clean {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .status-moderate {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .status-dirty {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .directions-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-top: 1rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .directions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .direction-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .step-icon {
+            color: #667eea;
+            margin-top: 0.2rem;
+        }
+
+        .updates-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .update-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            background: #f8fafc;
+            font-size: 0.8rem;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .path-line {
+            stroke: #2563eb;
+            stroke-width: 4;
+            stroke-dasharray: 10, 5;
+            animation: dash 2s linear infinite;
+            filter: drop-shadow(0 2px 4px rgba(37, 99, 235, 0.3));
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -15;
+            }
+        }
+
+        .user-location-marker {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
+        
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        .toilet-details-panel {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        .notification {
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .toilet-card:hover {
+            animation: bounce 0.6s ease-in-out;
+        }
+        
+        /* Enhanced map styles */
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .leaflet-popup-content {
+            margin: 0;
+            padding: 0;
+            line-height: 1.4;
+        }
+        
+        .leaflet-popup-tip {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(37, 99, 235, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(37, 99, 235, 0.6); }
+        }
+        
+        .update-item {
+            transition: all 0.3s ease;
+        }
+        
+        .hygiene-meter {
+            transition: all 0.5s ease;
+        }
+        
+        .toilet-card {
+            transition: all 0.3s ease;
+        }
+        
+        .toilet-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .loading {
+            text-align: center;
+            color: #6b7280;
+            padding: 2rem;
+        }
+
+        .loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+            }
+            
+            .logo {
+                font-size: 1.5rem;
+            }
+            
+            .toilet-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-restroom"></i>
+            CleanFind
+        </div>
+        <div class="user-info">
+            <span id="userName">Loading...</span>
+            <button onclick="logout()" style="background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="map-section">
+            <h2 class="section-title">
+                <i class="fas fa-map-marked-alt"></i>
+                Nearby Toilets
+            </h2>
+            <div id="map"></div>
+        </div>
+
+        <div class="sidebar">
+            <div class="updates-card">
+                <h3 class="section-title">
+                    <i class="fas fa-bell"></i>
+                    Real-time Updates
+                </h3>
+                <div id="realTimeUpdates">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        Waiting for updates...
+                    </div>
+                </div>
+            </div>
+
+            <div id="toiletsList">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    Loading toilets...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="directions-panel" id="directionsPanel">
+        <div class="directions-header">
+            <h3><i class="fas fa-route"></i> Directions</h3>
+            <button class="close-btn" onclick="closeDirections()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="directionsContent"></div>
+    </div>
+
+    <div class="notification" id="notification">
+        <div id="notificationContent"></div>
+    </div>
+
+    <script>
+        // Global variables
+        let map;
+        let toilets = [];
+        let currentPath = null;
+        let userLocation = null;
+        let accessToken = localStorage.getItem('accessToken');
+        let currentUser = null;
+
+        // Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+            if (!accessToken) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Initialize map
+            function initializeMap() {
+                // Default to New Delhi coordinates
+                map = L.map('map', {
+                    center: [28.6139, 77.2090],
+                    zoom: 14,
+                    zoomControl: true,
+                    attributionControl: true
+                });
+                
+                // Add tile layer with better error handling
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19,
+                    errorTileUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzZiNzI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk1hcCBsb2FkaW5nLi4uPC90ZXh0Pjwvc3ZnPg=='
+                }).addTo(map);
+                
+                // Add user location with better error handling
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            userLocation = [position.coords.latitude, position.coords.longitude];
+                            map.setView(userLocation, 15);
+                            
+                            // Add user location marker with custom icon
+                            const userIcon = L.divIcon({
+                                className: 'user-location-marker',
+                                html: '<div style="background: linear-gradient(135deg, #667eea, #764ba2); width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3); animation: pulse 2s infinite;"></div>',
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10],
+                                popupAnchor: [0, -10]
+                            });
+                            
+                            L.marker(userLocation, { icon: userIcon })
+                                .addTo(map)
+                                .bindPopup('<div style="font-weight: bold; color: #667eea;">📍 Your Location</div>');
+                                
+                            // Add accuracy circle
+                            const accuracy = position.coords.accuracy;
+                            L.circle(userLocation, {
+                                radius: accuracy,
+                                fillColor: '#667eea',
+                                fillOpacity: 0.1,
+                                color: '#667eea',
+                                opacity: 0.3,
+                                weight: 1
+                            }).addTo(map);
+                        },
+                        function(error) {
+                            console.warn('Geolocation error:', error);
+                            // Still show map with default location
+                            showNotification('Location access denied. Using default location.', 'info');
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 300000
+                        }
+                    );
+                } else {
+                    showNotification('Geolocation not supported. Using default location.', 'info');
+                }
+                
+                // Add map event listeners for better UX
+                map.on('load', function() {
+                    console.log('Map loaded successfully');
+                });
+                
+                map.on('error', function(error) {
+                    console.error('Map error:', error);
+                    showNotification('Map loading error. Please refresh the page.', 'error');
+                });
+            }
+
+            // Enhanced toilet marker creation with better icons
+            function addToiletMarkers() {
+                toilets.forEach(toilet => {
+                    // Create custom toilet icon based on status
+                    const toiletIcon = L.divIcon({
+                        className: 'toilet-marker',
+                        html: `
+                            <div style="
+                                position: relative;
+                                font-size: 2.5rem;
+                                filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+                                animation: float 3s ease-in-out infinite;
+                            ">
+                                ${toilet.icon}
+                                <div style="
+                                    position: absolute;
+                                    top: -5px;
+                                    right: -5px;
+                                    width: 12px;
+                                    height: 12px;
+                                    border-radius: 50%;
+                                    background: ${getStatusColor(toilet.status)};
+                                    border: 2px solid white;
+                                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                                "></div>
+                            </div>
+                        `,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 20],
+                        popupAnchor: [0, -20]
+                    });
+
+                    const marker = L.marker([toilet.lat, toilet.lng], {
+                        icon: toiletIcon,
+                        title: toilet.name,
+                        alt: `${toilet.name} - ${toilet.status}`
+                    });
+
+                    // Enhanced popup content
+                    const popupContent = createEnhancedPopupContent(toilet);
+                    marker.bindPopup(popupContent, {
+                        maxWidth: 300,
+                        className: 'toilet-popup',
+                        closeButton: true,
+                        autoClose: true
+                    });
+                    
+                    // Enhanced click event
+                    marker.on('click', function(e) {
+                        // Prevent map from zooming when clicking marker
+                        L.DomEvent.stopPropagation(e);
+                        
+                        // Show detailed information instead of just directions
+                        showToiletDetails(toilet.id);
+                        
+                        // Center map on toilet with smooth animation
+                        map.setView([toilet.lat, toilet.lng], 16, {
+                            animate: true,
+                            duration: 0.5
+                        });
+                    });
+                    
+                    // Add hover effects
+                    marker.on('mouseover', function() {
+                        this.setZIndexOffset(1000);
+                    });
+                    
+                    marker.on('mouseout', function() {
+                        this.setZIndexOffset(0);
+                    });
+                    
+                    marker.addTo(map);
+                });
+            }
+
+            // Enhanced popup content
+            function createEnhancedPopupContent(toilet) {
+                const lastCleaned = new Date(toilet.last_cleaned).toLocaleString();
+                const nextScheduled = new Date(toilet.next_scheduled).toLocaleString();
+                const distance = userLocation ? calculateDistance(userLocation, [toilet.lat, toilet.lng]) : null;
+                
+                return `
+                    <div style="min-width: 280px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 2px solid #f3f4f6;">
+                            <span style="font-size: 2rem;">${toilet.icon}</span>
+                            <div>
+                                <div style="font-weight: bold; color: #1f2937; font-size: 1.1rem;">${toilet.name}</div>
+                                <div style="color: #6b7280; font-size: 0.9rem;">${toilet.address}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: ${getStatusColor(toilet.status)}20; color: ${getStatusColor(toilet.status)}; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; font-weight: 600;">
+                            <i class="fas fa-shield-alt"></i>
+                            ${toilet.status} - Hygiene Score: ${toilet.hygiene_score}/100
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem; font-size: 0.85rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-users" style="color: #6b7280;"></i>
+                                <span>${toilet.occupancy}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-tint" style="color: ${toilet.water_available ? '#10b981' : '#ef4444'};"></i>
+                                <span>${toilet.water_available ? 'Water Available' : 'No Water'}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-pump-soap" style="color: ${toilet.soap_available ? '#10b981' : '#ef4444'};"></i>
+                                <span>${toilet.soap_available ? 'Soap Available' : 'No Soap'}</span>
+                            </div>
+                            ${distance ? `<div style="display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-walking" style="color: #6b7280;"></i><span>${distance.toFixed(1)} km away</span></div>` : ''}
+                        </div>
+                        
+                        <div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 1rem;">
+                            <div style="margin-bottom: 0.5rem;"><i class="fas fa-clock"></i> Last cleaned: ${lastCleaned}</div>
+                            <div><i class="fas fa-calendar-check"></i> Next scheduled: ${nextScheduled}</div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button style="flex: 1; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 0.75rem; border-radius: 8px; cursor: pointer; font-weight: 600;" onclick="showToiletDetails('${toilet.id}')">
+                                <i class="fas fa-info-circle"></i> Details
+                            </button>
+                            ${userLocation ? `<button style="flex: 1; background: #10b981; color: white; border: none; padding: 0.75rem; border-radius: 8px; cursor: pointer; font-weight: 600;" onclick="getDirectionsToToilet('${toilet.id}')">
+                                <i class="fas fa-directions"></i> Directions
+                            </button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Calculate distance between two points
+            function calculateDistance(from, to) {
+                const R = 6371; // Earth's radius in km
+                const dLat = (to[0] - from[0]) * Math.PI / 180;
+                const dLon = (to[1] - from[1]) * Math.PI / 180;
+                const lat1 = from[0] * Math.PI / 180;
+                const lat2 = to[0] * Math.PI / 180;
+    
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            }
+
+            // Update toilets list
+            function updateToiletsList() {
+                const container = document.getElementById('toiletsList');
+                container.innerHTML = '';
+    
+                toilets.forEach(toilet => {
+                    const toiletCard = document.createElement('div');
+                    toiletCard.className = 'toilet-card';
+                    toiletCard.innerHTML = `
+                        <div class="toilet-header">
+                            <div class="toilet-icon">${toilet.icon}</div>
+                            <div>
+                                <div class="toilet-name">${toilet.name}</div>
+                                <div class="status-badge status-${toilet.status.toLowerCase()}">${toilet.status}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="hygiene-meter">
+                            <div class="meter-container">
+                                <div class="meter-fill" style="background: ${getMeterColor(toilet.hygiene_score)}; width: ${toilet.hygiene_score}%;"></div>
+                            </div>
+                            <div class="meter-text" style="color: ${getMeterColor(toilet.hygiene_score)};">
+                                Hygiene Score: ${toilet.hygiene_score}/100
+                            </div>
+                        </div>
+                        
+                        <div class="toilet-details">
+                            <div class="detail-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>${toilet.address}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-users"></i>
+                                <span>${toilet.occupancy}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-tint" style="color: ${toilet.water_available ? '#10b981' : '#ef4444'}"></i>
+                                <span>${toilet.water_available ? 'Water' : 'No Water'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-pump-soap" style="color: ${toilet.soap_available ? '#10b981' : '#ef4444'}"></i>
+                                <span>${toilet.soap_available ? 'Soap' : 'No Soap'}</span>
+                            </div>
+                        </div>
+                        
+                        <button style="background: #667eea; color: white; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; margin-top: 1rem; width: 100%;" onclick="getDirectionsToToilet('${toilet.id}')">
+                            <i class="fas fa-directions"></i> Get Directions
+                        </button>
+                    `;
+                    
+                    toiletCard.addEventListener('click', function() {
+                        // Center map on toilet
+                        map.setView([toilet.lat, toilet.lng], 16);
+                    });
+                    
+                    container.appendChild(toiletCard);
+                });
+            }
+
+            // Get directions to toilet
+            async function getDirectionsToToilet(toiletId) {
+                const toilet = toilets.find(t => t.id === toiletId);
+                if (!toilet || !userLocation) return;
+                
+                showDirections(userLocation, [toilet.lat, toilet.lng], toilet);
+            }
+
+            // Show directions
+            async function showDirections(from, to, toilet) {
+                try {
+                    const response = await fetch(`/api/directions/${from[0]}/${from[1]}/${to[0]}/${to[1]}`, {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+    
+                    if (!response.ok) {
+                        throw new Error('Failed to get directions');
+                    }
+    
+                    const directions = await response.json();
+                    
+                    // Remove existing path
+                    if (currentPath) {
+                        map.removeLayer(currentPath);
+                    }
+                    
+                    // Draw new path
+                    currentPath = L.polyline(directions.path, {
+                        color: '#2563eb',
+                        weight: 4,
+                        opacity: 0.8,
+                        dashArray: '10, 5',
+                        className: 'path-line'
+                    }).addTo(map);
+                    
+                    // Fit map to show entire path
+                    map.fitBounds(currentPath.getBounds());
+                    
+                    // Show directions panel
+                    showDirectionsPanel(directions, toilet);
+                    
+                } catch (error) {
+                    console.error('Error getting directions:', error);
+                    showNotification('Failed to get directions', 'error');
+                }
+            }
+
+            // Show directions panel
+            function showDirectionsPanel(directions, toilet) {
+                const panel = document.getElementById('directionsPanel');
+                const content = document.getElementById('directionsContent');
+                
+                content.innerHTML = `
+                    <div style="margin-bottom: 1rem;">
+                        <strong>To: ${toilet.icon} ${toilet.name}</strong>
+                        <div style="font-size: 0.9rem; color: #6b7280;">
+                            Distance: ${(directions.distance / 1000).toFixed(1)} km • 
+                            Time: ${Math.ceil(directions.duration / 60)} min
+                        </div>
+                    </div>
+                    ${directions.instructions.map((instruction, index) => `
+                        <div class="direction-step">
+                            <div class="step-icon">${index === 0 ? '📍' : index === directions.instructions.length - 1 ? '🚻' : '➡️'}</div>
+                            <div>${instruction}</div>
+                        </div>
+                    `).join('')}
+                `;
+                
+                panel.style.display = 'block';
+            }
+
+            // Close directions panel
+            function closeDirections() {
+                document.getElementById('directionsPanel').style.display = 'none';
+                if (currentPath) {
+                    map.removeLayer(currentPath);
+                    currentPath = null;
+                }
+            }
+
+            // Start real-time updates
+            function startRealTimeUpdates() {
+                setInterval(async () => {
+                    try {
+                        const response = await fetch('/api/updates', {
+                            headers: {
+                                'Authorization': `Bearer ${accessToken}`
+                            }
+                        });
+    
+                        if (response.ok) {
+                            const data = await response.json();
+                            updateRealTimeUpdates(data.updates);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching updates:', error);
+                    }
+                }, 5000); // Update every 5 seconds
+                
+                // Refresh toilet data every 10 seconds to show hygiene score changes
+                setInterval(refreshToiletData, 10000);
+            }
+
+            // Update real-time updates
+            function updateRealTimeUpdates(updates) {
+                const container = document.getElementById('realTimeUpdates');
+                
+                if (updates.length === 0) {
+                    container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> No updates</div>';
+                    return;
+                }
+                
+                container.innerHTML = updates.map(update => {
+                    let iconClass, iconColor, updateText;
+                    
+                    if (update.type === 'hygiene_depreciation') {
+                        iconClass = 'arrow-down';
+                        iconColor = '#ef4444';
+                        updateText = `Hygiene score dropped: ${update.old_score} → ${update.new_score}/100`;
+                    } else if (update.type === 'cleaned') {
+                        iconClass = 'broom';
+                        iconColor = '#10b981';
+                        updateText = `${update.previous_status} → ${update.new_status} (${update.new_score}/100)`;
+                    } else {
+                        iconClass = 'exclamation-triangle';
+                        iconColor = '#f59e0b';
+                        updateText = `${update.previous_status} → ${update.new_status} (${update.new_score}/100)`;
+                    }
+                    
+                    return `
+                        <div class="update-item">
+                            <div style="font-size: 1.2rem; margin-right: 0.5rem;">${update.icon || '🚻'}</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: bold;">${update.toilet_name}</div>
+                                <div style="font-size: 0.8rem; color: #6b7280;">
+                                    ${updateText}
+                                </div>
+                                <div style="font-size: 0.7rem; color: #9ca3af;">
+                                    ${new Date(update.timestamp).toLocaleTimeString()}
+                                </div>
+                            </div>
+                            <i class="fas fa-${iconClass}" style="color: ${iconColor}; font-size: 1rem;"></i>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Add pulse animation to the latest update
+                const firstUpdate = container.firstElementChild;
+                if (firstUpdate) {
+                    firstUpdate.style.animation = 'pulse 1s ease-in-out';
+                    setTimeout(() => {
+                        firstUpdate.style.animation = '';
+                    }, 1000);
+                }
+            }
+
+            // Utility functions
+            function getStatusColor(status) {
+                switch (status.toLowerCase()) {
+                    case 'clean': return '#10b981';
+                    case 'moderate': return '#f59e0b';
+                    case 'dirty': return '#ef4444';
+                    default: return '#6b7280';
+                }
+            }
+
+            function getMeterColor(score) {
+                if (score >= 80) return '#10b981';
+                if (score >= 50) return '#f59e0b';
+                return '#ef4444';
+            }
+
+            /* Professional Toilet Details Panel Styles */
+            .toilet-details-panel {
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border-radius: 20px;
+                padding: 2rem;
+                margin: 2rem 1rem;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                opacity: 0;
+                transform: translateY(20px);
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                max-width: 1200px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            
+            .toilet-details-panel.show {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            
+            .details-container {
+                display: flex;
+                flex-direction: column;
+                gap: 2rem;
+            }
+            
+            .details-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 1rem;
+                padding-bottom: 1.5rem;
+                border-bottom: 2px solid #e5e7eb;
+            }
+            
+            .toilet-info {
+                display: flex;
+                align-items: center;
+                gap: 1.5rem;
+            }
+            
+            .toilet-icon-large {
+                font-size: 3rem;
+                filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+                animation: bounce 2s infinite;
+            }
+            
+            .toilet-name-large {
+                font-size: 2rem;
+                font-weight: 700;
+                color: #1f2937;
+                margin: 0;
+                line-height: 1.2;
+            }
+            
+            .toilet-address {
+                font-size: 1.1rem;
+                color: #6b7280;
+                margin: 0.5rem 0 0 0;
+                font-weight: 500;
+            }
+            
+            .close-details-btn {
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+                color: white;
+                border: none;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.2rem;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            }
+            
+            .close-details-btn:hover {
+                transform: scale(1.1);
+                box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+            }
+            
+            .hygiene-score-section {
+                background: linear-gradient(135deg, #f8fafc 0%, #e5e7eb 100%);
+                border-radius: 16px;
+                padding: 2rem;
+                border: 2px solid #e5e7eb;
+            }
+            
+            .score-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1.5rem;
+            }
+            
+            .score-header h3 {
+                margin: 0;
+                font-size: 1.3rem;
+                color: #374151;
+                font-weight: 600;
+            }
+            
+            .score-badge {
+                color: white;
+                padding: 0.5rem 1.5rem;
+                border-radius: 25px;
+                font-size: 1.5rem;
+                font-weight: 700;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                animation: pulse 2s infinite;
+            }
+            
+            .score-progress {
+                background: #e5e7eb;
+                border-radius: 10px;
+                height: 12px;
+                overflow: hidden;
+                margin-bottom: 1rem;
+            }
+            
+            .progress-bar {
+                height: 100%;
+                border-radius: 10px;
+                transition: width 1s ease-in-out;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            
+            .score-description {
+                font-size: 1rem;
+                color: #6b7280;
+                margin: 0;
+                font-weight: 500;
+                text-align: center;
+            }
+            
+            .status-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1.5rem;
+            }
+            
+            .status-card {
+                background: white;
+                border-radius: 12px;
+                padding: 1.5rem;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                border: 1px solid #e5e7eb;
+                transition: all 0.3s ease;
+            }
+            
+            .status-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            }
+            
+            .status-icon {
+                font-size: 2rem;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #f3f4f6;
+            }
+            
+            .status-info {
+                flex: 1;
+            }
+            
+            .status-label {
+                font-size: 0.9rem;
+                color: #6b7280;
+                font-weight: 500;
+                margin-bottom: 0.25rem;
+            }
+            
+            .status-value {
+                font-size: 1.1rem;
+                font-weight: 600;
+            }
+            
+            .maintenance-info {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-radius: 16px;
+                padding: 2rem;
+            }
+            
+            .maintenance-info h3 {
+                margin: 0 0 1.5rem 0;
+                font-size: 1.3rem;
+                font-weight: 600;
+            }
+            
+            .info-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .info-item {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                font-size: 1rem;
+            }
+            
+            .info-item i {
+                width: 20px;
+                color: rgba(255, 255, 255, 0.8);
+            }
+            
+            .action-buttons {
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .btn-primary, .btn-secondary {
+                padding: 1rem 2rem;
+                border: none;
+                border-radius: 12px;
+                font-size: 1.1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                text-decoration: none;
+            }
+            
+            .btn-primary {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            }
+            
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            }
+            
+            .btn-secondary {
+                background: white;
+                color: #374151;
+                border: 2px solid #e5e7eb;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            }
+            
+            .btn-secondary:hover {
+                background: #f9fafb;
+                border-color: #d1d5db;
+                transform: translateY(-2px);
+            }
+            
+            @keyframes bounce {
+                0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+                40% { transform: translateY(-10px); }
+                60% { transform: translateY(-5px); }
+            }
+            
+            @keyframes scoreDepreciate {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); background-color: #fee2e2; }
+                100% { transform: scale(1); }
+            }
+            
+            .score-badge.depreciating {
+                animation: scoreDepreciate 0.5s ease-in-out;
+            }
+            
+            @media (max-width: 768px) {
+                .toilet-details-panel {
+                    padding: 1.5rem;
+                    margin: 1rem;
+                }
+                
+                .details-header {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                
+                .toilet-info {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 1rem;
+                }
+                
+                .toilet-name-large {
+                    font-size: 1.5rem;
+                }
+                
+                .status-grid {
+                    grid-template-columns: 1fr;
+                }
+                
+                .action-buttons {
+                    flex-direction: column;
+                }
+                
+                .btn-primary, .btn-secondary {
+                    width: 100%;
+                    justify-content: center;
+                }
+            }
+
+            // Add a global variable for the currently selected toilet
+            let selectedToilet = null;
+            let toiletDetailsPanel = null;
+
+            // Add toilet details panel HTML structure
+            function createToiletDetailsPanel() {
+                const panel = document.createElement('div');
+                panel.id = 'toiletDetailsPanel';
+                panel.className = 'toilet-details-panel';
+                panel.style.display = 'none';
+                
+                // Insert after the map section
+                const mapSection = document.querySelector('.map-section');
+                mapSection.parentNode.insertBefore(panel, mapSection.nextSibling);
+                
+                return panel;
+            }
+
+            // Enhanced showToiletDetails function
+            function showToiletDetails(toiletId) {
+                const toilet = toilets.find(t => t.id === toiletId);
+                if (!toilet) return;
+                
+                selectedToilet = toilet;
+                
+                // Create panel if it doesn't exist
+                if (!toiletDetailsPanel) {
+                    toiletDetailsPanel = createToiletDetailsPanel();
+                }
+                
+                // Update panel content with professional design
+                const lastCleaned = new Date(toilet.last_cleaned).toLocaleString();
+                const nextScheduled = new Date(toilet.next_scheduled).toLocaleString();
+                
+                toiletDetailsPanel.innerHTML = `
+                    <div class="details-container">
+                        <div class="details-header">
+                            <div class="toilet-info">
+                                <span class="toilet-icon-large">${toilet.icon}</span>
+                                <div>
+                                    <h2 class="toilet-name-large">${toilet.name}</h2>
+                                    <p class="toilet-address">${toilet.address}</p>
+                                </div>
+                            </div>
+                            <button class="close-details-btn" onclick="closeToiletDetails()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="hygiene-score-section">
+                            <div class="score-header">
+                                <h3><i class="fas fa-shield-alt"></i> Overall Hygiene Score</h3>
+                                <div id="scoreBadge" class="score-badge" style="background: ${getMeterColor(toilet.hygiene_score)};">
+                                    ${toilet.hygiene_score}/100
+                                </div>
+                            </div>
+                            <div class="score-progress">
+                                <div id="progressBar" class="progress-bar" style="width: ${toilet.hygiene_score}%; background: ${getMeterColor(toilet.hygiene_score)};"></div>
+                            </div>
+                            <p id="scoreDescription" class="score-description">${getScoreDescription(toilet.hygiene_score)}</p>
+                            <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.5rem; text-align: center;">
+                                <i class="fas fa-clock"></i> Score updates every 10 seconds
+                            </div>
+                        </div>
+                        
+                        <div class="status-grid">
+                            <div class="status-card">
+                                <div class="status-icon" style="color: ${getStatusColor(toilet.status)};">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="status-info">
+                                    <div class="status-label">Status</div>
+                                    <div class="status-value" style="color: ${getStatusColor(toilet.status)};">${toilet.status}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="status-card">
+                                <div class="status-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="status-info">
+                                    <div class="status-label">Occupancy</div>
+                                    <div class="status-value">${toilet.occupancy}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="status-card">
+                                <div class="status-icon" style="color: ${toilet.water_available ? '#10b981' : '#ef4444'};">
+                                    <i class="fas fa-tint"></i>
+                                </div>
+                                <div class="status-info">
+                                    <div class="status-label">Water</div>
+                                    <div class="status-value" style="color: ${toilet.water_available ? '#10b981' : '#ef4444'};">
+                                        ${toilet.water_available ? 'Available' : 'Not Available'}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="status-card">
+                                <div class="status-icon" style="color: ${toilet.soap_available ? '#10b981' : '#ef4444'};">
+                                    <i class="fas fa-pump-soap"></i>
+                                </div>
+                                <div class="status-info">
+                                    <div class="status-label">Soap</div>
+                                    <div class="status-value" style="color: ${toilet.soap_available ? '#10b981' : '#ef4444'};">
+                                        ${toilet.soap_available ? 'Available' : 'Not Available'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="maintenance-info">
+                            <h3><i class="fas fa-tools"></i> Maintenance Information</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span><strong>Last Cleaned:</strong> ${lastCleaned}</span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <span><strong>Next Scheduled:</strong> ${nextScheduled}</span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fas fa-broom"></i>
+                                    <span><strong>Cleaning Frequency:</strong> ${toilet.cleaning_frequency || 'Regular'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="btn-primary" onclick="getDirectionsToToilet('${toilet.id}')">
+                                <i class="fas fa-directions"></i> Get Directions
+                            </button>
+                            <button class="btn-secondary" onclick="centerMapOnToilet('${toilet.id}')">
+                                <i class="fas fa-map-marker-alt"></i> Show on Map
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Show panel with smooth animation
+                toiletDetailsPanel.style.display = 'block';
+                setTimeout(() => {
+                    toiletDetailsPanel.classList.add('show');
+                    // Scroll to the panel
+                    toiletDetailsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 10);
+            }
+
+            // Close toilet details
+            function closeToiletDetails() {
+                if (toiletDetailsPanel) {
+                    toiletDetailsPanel.classList.remove('show');
+                    setTimeout(() => {
+                        toiletDetailsPanel.style.display = 'none';
+                    }, 300);
+                }
+                selectedToilet = null;
+            }
+
+            // Center map on toilet
+            function centerMapOnToilet(toiletId) {
+                const toilet = toilets.find(t => t.id === toiletId);
+                if (toilet) {
+                    map.setView([toilet.lat, toilet.lng], 18);
+                    closeToiletDetails();
+                }
+            }
+
+            // Update toilet details panel with new score
+            function updateToiletDetailsScore(toiletId, newScore, newStatus) {
+                const toilet = toilets.find(t => t.id === toiletId);
+                if (!toilet || !selectedToilet || selectedToilet.id !== toiletId) return;
+                
+                // Update the toilet data
+                toilet.hygiene_score = newScore;
+                toilet.status = newStatus;
+                
+                // Update the UI elements with animation
+                const scoreBadge = document.getElementById('scoreBadge');
+                const progressBar = document.getElementById('progressBar');
+                const scoreDescription = document.getElementById('scoreDescription');
+                
+                if (scoreBadge) {
+                    scoreBadge.textContent = `${newScore}/100`;
+                    scoreBadge.style.background = getMeterColor(newScore);
+                    scoreBadge.classList.add('depreciating');
+                    setTimeout(() => scoreBadge.classList.remove('depreciating'), 500);
+                }
+                
+                if (progressBar) {
+                    progressBar.style.width = `${newScore}%`;
+                    progressBar.style.background = getMeterColor(newScore);
+                }
+                
+                if (scoreDescription) {
+                    scoreDescription.textContent = getScoreDescription(newScore);
+                }
+            }
+
+            // Refresh toilet data periodically
+            function refreshToiletData() {
+                fetch('/api/toilets', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.toilets) {
+                        toilets = data.toilets;
+                        updateToiletsList();
+                        
+                        // Update selected toilet if panel is open
+                        if (selectedToilet) {
+                            const updatedToilet = toilets.find(t => t.id === selectedToilet.id);
+                            if (updatedToilet) {
+                                updateToiletDetailsScore(updatedToilet.id, updatedToilet.hygiene_score, updatedToilet.status);
+                            }
+                        }
+                    }
+                })
+                .catch(error => console.error('Error refreshing toilet data:', error));
+            }
+
+            // Get score description
+            function getScoreDescription(score) {
+                if (score >= 90) return 'Excellent hygiene standards - Very safe to use';
+                if (score >= 80) return 'Good hygiene standards - Safe to use';
+                if (score >= 70) return 'Acceptable hygiene standards - Generally safe';
+                if (score >= 50) return 'Moderate hygiene standards - Use with caution';
+                if (score >= 30) return 'Poor hygiene standards - Not recommended';
+                return 'Very poor hygiene standards - Avoid if possible';
+            }
+
+            function showNotification(message, type = 'info') {
+                const notification = document.getElementById('notification');
+                const content = document.getElementById('notificationContent');
+                
+                const colors = {
+                    success: '#10b981',
+                    error: '#ef4444',
+                    info: '#667eea'
+                };
+                
+                content.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.5rem; color: ${colors[type] || colors.info};">
+                        <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'}"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+                
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+
+            function logout() {
+                localStorage.removeItem('accessToken');
+                window.location.href = '/login';
+            }
+        </script>
+</body>
+</html>

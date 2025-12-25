@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CleanFind - Login & Sign Up</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 900px;
+            max-width: 95%;
+            min-height: 600px;
+            position: relative;
+        }
+
+        .auth-header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .auth-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .auth-header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            background: white;
+            color: #4CAF50;
+            border-bottom: 3px solid #4CAF50;
+        }
+
+        .auth-tab:hover {
+            background: #e9ecef;
+        }
+
+        .auth-content {
+            padding: 40px;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .role-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .role-option {
+            text-align: center;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .role-option:hover {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.05);
+        }
+
+        .role-option.selected {
+            border-color: #4CAF50;
+            background: #4CAF50;
+            color: white;
+        }
+
+        .role-option i {
+            font-size: 2em;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .role-option span {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+                gap: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 10px 20px rgba(108, 117, 125, 0.3);
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .demo-credentials {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .demo-credentials h4 {
+            color: #495057;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .credential-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .credential-item:last-child {
+            border-bottom: none;
+        }
+
+        .credential-item strong {
+            color: #495057;
+        }
+
+        .credential-item span {
+            background: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .auth-container {
+                width: 95%;
+                margin: 20px;
+            }
+            
+            .auth-header {
+                padding: 30px 20px;
+            }
+            
+            .auth-header h1 {
+                font-size: 2em;
+            }
+            
+            .auth-content {
+                padding: 30px 20px;
+            }
+            
+            .role-selection {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1><i class="fas fa-restroom"></i> CleanFind</h1>
+            <p>Smart Toilet Hygiene Monitoring System</p>
+        </div>
+
+        <div class="auth-tabs">
+            <button class="auth-tab active" onclick="showTab('login')">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+            <button class="auth-tab" onclick="showTab('signup')">
+                <i class="fas fa-user-plus"></i> Sign Up
+            </button>
+        </div>
+
+        <div class="auth-content">
+            <div id="alert" class="alert"></div>
+
+            <!-- Login Form -->
+            <div id="login-form" class="auth-form active">
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" required placeholder="Enter your email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required placeholder="Enter your password">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-role">Login As</label>
+                        <select id="login-role" required>
+                            <option value="">Select Role</option>
+                            <option value="public">Public User</option>
+                            <option value="cleaner">Cleaning Staff</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Login
+                    </button>
+                </form>
+
+                <div class="loading" id="login-loading">
+                    <div class="spinner"></div>
+                    <p>Logging in...</p>
+                </div>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div id="signup-form" class="auth-form">
+                <form onsubmit="handleSignup(event)">
+                    <div class="form-group">
+                        <label>Choose Your Role</label>
+                        <div class="role-selection">
+                            <div class="role-option" onclick="selectRole('public')">
+                                <i class="fas fa-user"></i>
+                                <span>Public User</span>
+                            </div>
+                            <div class="role-option" onclick="selectRole('cleaner')">
+                                <i class="fas fa-broom"></i>
+                                <span>Cleaning Staff</span>
+                            </div>
+                            <div class="role-option" onclick="selectRole('admin')">
+                                <i class="fas fa-cog"></i>
+                                <span>Admin</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="signup-role" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-username">Username</label>
+                        <input type="text" id="signup-username" required placeholder="Choose a username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-name">Full Name</label>
+                        <input type="text" id="signup-name" required placeholder="Enter your full name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-email">Email</label>
+                        <input type="email" id="signup-email" required placeholder="Enter your email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" required placeholder="Create a strong password">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-confirm-password">Confirm Password</label>
+                        <input type="password" id="signup-confirm-password" required placeholder="Confirm your password">
+                    </div>
+
+                    <button type="submit" class="btn">
+                        <i class="fas fa-user-plus"></i>
+                        Create Account
+                    </button>
+                </form>
+
+                <div class="loading" id="signup-loading">
+                    <div class="spinner"></div>
+                    <p>Creating account...</p>
+                </div>
+            </div>
+
+            <!-- Demo Credentials -->
+            <div class="demo-credentials">
+                <h4><i class="fas fa-info-circle"></i> Demo Credentials</h4>
+                <div class="credential-item">
+                    <strong>Public User:</strong>
+                    <span>user1 / password123</span>
+                </div>
+                <div class="credential-item">
+                    <strong>Cleaning Staff:</strong>
+                    <span>cleaner1 / password123</span>
+                </div>
+                <div class="credential-item">
+                    <strong>Admin:</strong>
+                    <span>admin / admin123</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedRole = null;
+
+        function showTab(tab) {
+            // Update tabs
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update forms
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            document.getElementById(tab + '-form').classList.add('active');
+        }
+
+        function selectRole(role) {
+            selectedRole = role;
+            document.querySelectorAll('.role-option').forEach(r => r.classList.remove('selected'));
+            event.target.closest('.role-option').classList.add('selected');
+            document.getElementById('signup-role').value = role;
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            const loginForm = event.target;
+            const loading = document.getElementById('login-loading');
+            const submitBtn = loginForm.querySelector('.btn');
+
+            // Show loading
+            loginForm.style.display = 'none';
+            loading.style.display = 'block';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Store token and user info
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    showAlert('Login successful! Redirecting...', 'success');
+                    
+                    // Redirect based on role from server response
+                    const userRole = data.user.role;
+                    setTimeout(() => {
+                        switch(userRole) {
+                            case 'public':
+                                window.location.href = '/dashboard';
+                                break;
+                            case 'cleaner':
+                                window.location.href = '/staff-dashboard';
+                                break;
+                            case 'admin':
+                                window.location.href = '/admin-dashboard';
+                                break;
+                            default:
+                                window.location.href = '/dashboard';
+                        }
+                    }, 1500);
+                } else {
+                    showAlert(data.error || 'Login failed', 'error');
+                    loginForm.style.display = 'block';
+                    loading.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                showAlert('Network error. Please try again.', 'error');
+                loginForm.style.display = 'block';
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function handleSignup(event) {
+            event.preventDefault();
+            
+            const role = document.getElementById('signup-role').value;
+            const username = document.getElementById('signup-username').value;
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+
+            if (!role) {
+                showAlert('Please select a role', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showAlert('Passwords do not match', 'error');
+                return;
+            }
+
+            const signupForm = event.target;
+            const loading = document.getElementById('signup-loading');
+            const submitBtn = signupForm.querySelector('.btn');
+
+            // Show loading
+            signupForm.style.display = 'none';
+            loading.style.display = 'block';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        role: role,
+                        name: name,
+                        email: email
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('Account created successfully! You can now login.', 'success');
+                    
+                    // Switch to login tab
+                    setTimeout(() => {
+                        showTab('login');
+                        document.querySelector('.auth-tab').click();
+                        signupForm.style.display = 'block';
+                        loading.style.display = 'none';
+                        submitBtn.disabled = false;
+                        signupForm.reset();
+                        selectedRole = null;
+                        document.querySelectorAll('.role-option').forEach(r => r.classList.remove('selected'));
+                    }, 2000);
+                } else {
+                    showAlert(data.error || 'Signup failed', 'error');
+                    signupForm.style.display = 'block';
+                    loading.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                showAlert('Network error. Please try again.', 'error');
+                signupForm.style.display = 'block';
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Auto-login for demo purposes (remove in production)
+        document.addEventListener('DOMContentLoaded', function() {
+            // You can add auto-login functionality here if needed for testing
+        });
+    </script>
+</body>
+</html>

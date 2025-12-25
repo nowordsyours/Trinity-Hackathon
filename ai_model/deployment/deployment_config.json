@@ -1,0 +1,54 @@
+{
+  "model_path": "../models/hygiene_predictor.pkl",
+  "requirements_file": "requirements.txt",
+  "deployment_package_name": "hygiene_model_deployment",
+  "target_environment": "production",
+  "backup_models": true,
+  "validate_model": true,
+  "create_api": true,
+  "monitoring_enabled": true,
+  "deployment_targets": {
+    "local": {
+      "path": "./deployed_model",
+      "create_service": false
+    },
+    "production": {
+      "path": "/opt/hygiene_model",
+      "create_service": true,
+      "service_name": "hygiene_model_service"
+    }
+  },
+  "api_configuration": {
+    "host": "0.0.0.0",
+    "port": 5000,
+    "debug": false,
+    "max_requests_per_minute": 100,
+    "request_timeout": 30
+  },
+  "monitoring_configuration": {
+    "check_interval": 60,
+    "alert_thresholds": {
+      "response_time": 5.0,
+      "error_rate": 10.0,
+      "prediction_variance": 20.0
+    },
+    "log_level": "INFO"
+  },
+  "model_validation": {
+    "test_sample_features": [50, 22, 1.0, 600, 2, 15, 3],
+    "expected_prediction_range": [0, 100],
+    "required_methods": ["predict"]
+  },
+  "security_configuration": {
+    "enable_authentication": false,
+    "api_key_required": false,
+    "rate_limiting": true,
+    "input_validation": true
+  },
+  "performance_configuration": {
+    "model_cache_size": 1,
+    "preprocessing_cache": true,
+    "batch_prediction_support": false,
+    "max_batch_size": 100
+  }
+}

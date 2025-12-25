@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CleanFind - Staff Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: 80px 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+
+        .sidebar {
+            grid-row: 1 / -1;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 40px;
+            color: #ecf0f1;
+        }
+
+        .logo i {
+            font-size: 1.4em;
+            color: #3498db;
+        }
+
+        .nav-menu {
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            margin-bottom: 5px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #bdc3c7;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(52, 152, 219, 0.2);
+            color: white;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .user-role {
+            font-size: 0.9em;
+            color: #bdc3c7;
+        }
+
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        .header {
+            background: white;
+            padding: 0 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stats-summary {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            min-width: 80px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+
+        .main-content {
+            padding: 30px;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .icon-red { background: #e74c3c; }
+        .icon-orange { background: #f39c12; }
+        .icon-green { background: #27ae60; }
+        .icon-blue { background: #3498db; }
+
+        .priority-list {
+            list-style: none;
+        }
+
+        .priority-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #e74c3c;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .priority-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .priority-item.selected {
+            background-color: #e3f2fd;
+            border: 2px solid #2196f3;
+        }
+
+        .clean-action {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .clean-action button {
+            width: 100%;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .clean-action button:hover {
+            background: linear-gradient(135deg, #45a049, #388e3c);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .clean-action button:active {
+            transform: translateY(0);
+        }
+
+        .priority-item.medium {
+            border-left-color: #f39c12;
+        }
+
+        .priority-item.low {
+            border-left-color: #27ae60;
+        }
+
+        .priority-info {
+            flex: 1;
+        }
+
+        .priority-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .priority-address {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .priority-status {
+            text-align: right;
+        }
+
+        .priority-score {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .priority-badge {
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
+        .badge-high { background: #f8d7da; color: #721c24; }
+        .badge-medium { background: #fff3cd; color: #856404; }
+        .badge-low { background: #d4edda; color: #155724; }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+            transition: all 0.3s ease;
+        }
+
+        .task-item.in-progress {
+            border-left-color: #f39c12;
+            background: #fff3cd;
+        }
+
+        .task-item.completed {
+            border-left-color: #27ae60;
+            background: #d4edda;
+            opacity: 0.7;
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .task-info {
+            flex: 1;
+        }
+
+        .task-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .task-time {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-start {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-start:hover {
+            background: #2980b9;
+        }
+
+        .btn-complete {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-complete:hover {
+            background: #229954;
+        }
+
+        .map-container {
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-left: 4px solid #27ae60;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .notification-message {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .modal-body {
+            margin-bottom: 25px;
+            color: #6c757d;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-container {
+                grid-template-columns: 200px 1fr;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+            
+            .sidebar {
+                grid-row: 1;
+                grid-column: 1;
+                flex-direction: row;
+                padding: 15px;
+                overflow-x: auto;
+            }
+            
+            .logo {
+                margin-bottom: 0;
+                margin-right: 20px;
+            }
+            
+            .nav-menu {
+                display: flex;
+                flex-direction: row;
+                gap: 10px;
+            }
+            
+            .nav-item {
+                margin-bottom: 0;
+                white-space: nowrap;
+            }
+            
+            .user-info {
+                margin-top: 0;
+                margin-left: 20px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-restroom"></i>
+                CleanFind
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-item active" onclick="showSection('dashboard')">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </div>
+                <div class="nav-item" onclick="showSection('tasks')">
+                    <i class="fas fa-tasks"></i>
+                    My Tasks
+                </div>
+                <div class="nav-item" onclick="showSection('priority')">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Priority Toilets
+                </div>
+                <div class="nav-item" onclick="showSection('map')">
+                    <i class="fas fa-map"></i>
+                    Map View
+                </div>
+                <div class="nav-item" onclick="showSection('stats')">
+                    <i class="fas fa-chart-bar"></i>
+                    Statistics
+                </div>
+            </nav>
+            
+            <div class="user-info">
+                <div class="user-name" id="user-name">Loading...</div>
+                <div class="user-role">Cleaning Staff</div>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="header-title" id="section-title">Staff Dashboard</div>
+            <div class="header-controls">
+                <div class="stats-summary">
+                    <div class="stat-item">
+                        <div class="stat-value" id="tasks-today">0</div>
+                        <div class="stat-label">Today</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="pending-tasks">0</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="avg-rating">0</div>
+                        <div class="stat-label">Rating</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="section">
+                <div class="dashboard-grid">
+                    <!-- Priority Toilets -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon icon-red">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                High Priority Toilets
+                            </div>
+                        </div>
+                        <ul class="priority-list" id="priority-list">
+                            <li class="priority-item">
+                                <div class="priority-info">
+                                    <div class="priority-name">Loading...</div>
+                                    <div class="priority-address">Please wait</div>
+                                </div>
+                                <div class="priority-status">
+                                    <div class="priority-score">--</div>
+                                    <span class="priority-badge badge-high">High</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Today's Tasks -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon icon-blue">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                Today's Tasks
+                            </div>
+                        </div>
+                        <ul class="task-list" id="task-list">
+                            <li class="task-item">
+                                <div class="task-info">
+                                    <div class="task-name">Loading tasks...</div>
+                                    <div class="task-time">Please wait</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Map -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon icon-green">
+                                <i class="fas fa-map"></i>
+                            </div>
+                            Priority Toilets Map
+                        </div>
+                    </div>
+                    <div class="map-container">
+                        <div id="map"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks Section -->
+            <div id="tasks-section" class="section" style="display: none;">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon icon-blue">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            My Cleaning Tasks
+                        </div>
+                        <button class="btn btn-primary" onclick="refreshTasks()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <ul class="task-list" id="full-task-list">
+                        <!-- Tasks will be loaded here -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Priority Section -->
+            <div id="priority-section" class="section" style="display: none;">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon icon-red">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            All Priority Toilets
+                        </div>
+                        <button class="btn btn-primary" onclick="refreshPriorityToilets()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <ul class="priority-list" id="full-priority-list">
+                        <!-- Priority toilets will be loaded here -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Map Section -->
+            <div id="map-section" class="section" style="display: none;">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon icon-green">
+                                <i class="fas fa-map"></i>
+                            </div>
+                            Full Map View
+                        </div>
+                    </div>
+                    <div class="map-container" style="height: 500px;">
+                        <div id="full-map"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div id="stats-section" class="section" style="display: none;">
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon icon-green">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                Performance Metrics
+                            </div>
+                        </div>
+                        <div id="performance-stats">
+                            <!-- Stats will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon icon-blue">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                Customer Ratings
+                            </div>
+                        </div>
+                        <div id="rating-stats">
+                            <!-- Rating stats will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cleaning Confirmation Modal -->
+    <div id="cleaningModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-title">Start Cleaning?</div>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <p>Are you sure you want to start cleaning this toilet?</p>
+                <p><strong id="modal-toilet-name"></strong></p>
+                <p>This will update the toilet status to "In Progress".</p>
+            </div>
+            <div class="modal-actions" id="modal-actions">
+                <button class="btn btn-primary" onclick="confirmStartCleaning()">Start Cleaning</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <div class="notification-title" id="notification-title">Update</div>
+        <div class="notification-message" id="notification-message">New task assigned</div>
+    </div>
+
+    <script>
+        let currentSection = 'dashboard';
+        let currentToiletId = null;
+        let map;
+        let staffStats = {};
+        let tasks = [];
+        let priorityToilets = [];
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get user info
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.name) {
+                document.getElementById('user-name').textContent = user.name;
+            }
+
+            // Load initial data
+            loadDashboardData();
+            
+            // Set up real-time updates
+            setupRealTimeUpdates();
+        });
+
+        // Show different sections
+        function showSection(section) {
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
+            
+            // Show selected section
+            document.getElementById(section + '-section').style.display = 'block';
+            
+            // Update title
+            const titles = {
+                'dashboard': 'Staff Dashboard',
+                'tasks': 'My Tasks',
+                'priority': 'Priority Toilets',
+                'map': 'Map View',
+                'stats': 'Statistics'
+            };
+            document.getElementById('section-title').textContent = titles[section];
+            
+            currentSection = section;
+            
+            // Load section-specific data
+            if (section === 'map' && !map) {
+                setTimeout(() => initMap('full-map'), 100);
+            } else if (section === 'tasks') {
+                loadTasks();
+            } else if (section === 'priority') {
+                loadPriorityToilets();
+            } else if (section === 'stats') {
+                loadStatistics();
+            }
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                // Load staff stats
+                const statsResponse = await fetch('/api/staff/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (statsResponse.ok) {
+                    const statsData = await statsResponse.json();
+                    staffStats = statsData.stats;
+                    updateHeaderStats();
+                }
+
+                // Load priority toilets
+                await loadPriorityToilets();
+
+                // Load tasks
+                await loadTasks();
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showNotification('Error', 'Failed to load dashboard data', 'error');
+            }
+        }
+
+        // Update header statistics
+        function updateHeaderStats() {
+            document.getElementById('tasks-today').textContent = staffStats.cleaned_today || 0;
+            document.getElementById('pending-tasks').textContent = (staffStats.total_tasks - staffStats.tasks_completed) || 0;
+            document.getElementById('avg-rating').textContent = staffStats.avg_rating || 0;
+        }
+
+        // Load priority toilets
+        async function loadPriorityToilets() {
+            try {
+                const response = await fetch('/api/staff/priority-toilets', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    priorityToilets = data.toilets;
+                    updatePriorityLists();
+                    updateMap();
+                }
+            } catch (error) {
+                console.error('Error loading priority toilets:', error);
+            }
+        }
+
+        // Update priority lists
+        function updatePriorityLists() {
+            const dashboardList = document.getElementById('priority-list');
+            const fullList = document.getElementById('full-priority-list');
+            
+            // Dashboard list (top 3)
+            const topPriority = priorityToilets.slice(0, 3);
+            dashboardList.innerHTML = topPriority.map(toilet => `
+                <li class="priority-item ${toilet.priority}" onclick="handleToiletClick('${toilet.id}', '${toilet.name}', '${toilet.address}', '${toilet.priority}', ${toilet.hygiene_score})">
+                    <div class="priority-info">
+                        <div class="priority-name">${toilet.name}</div>
+                        <div class="priority-address">${toilet.address}</div>
+                    </div>
+                    <div class="priority-status">
+                        <div class="priority-score">${toilet.hygiene_score}</div>
+                        <span class="priority-badge badge-${toilet.priority}">${toilet.priority}</span>
+                    </div>
+                    <div class="clean-action" id="clean-action-${toilet.id}" style="display: none; margin-top: 10px;">
+                        <button class="btn-small btn-start" onclick="startCleaning('${toilet.id}', '${toilet.name}')">Clean This</button>
+                    </div>
+                </li>
+            `).join('');
+
+            // Full list
+            fullList.innerHTML = priorityToilets.map(toilet => `
+                <li class="priority-item ${toilet.priority}" onclick="handleToiletClick('${toilet.id}', '${toilet.name}', '${toilet.address}', '${toilet.priority}', ${toilet.hygiene_score})">
+                    <div class="priority-info">
+                        <div class="priority-name">${toilet.name}</div>
+                        <div class="priority-address">${toilet.address}</div>
+                    </div>
+                    <div class="priority-status">
+                        <div class="priority-score">${toilet.hygiene_score}</div>
+                        <span class="priority-badge badge-${toilet.priority}">${toilet.priority}</span>
+                    </div>
+                    <div class="clean-action" id="clean-action-${toilet.id}" style="display: none; margin-top: 10px;">
+                        <button class="btn-small btn-start" onclick="startCleaning('${toilet.id}', '${toilet.name}')">Clean This</button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // Load tasks
+        async function loadTasks() {
+            try {
+                const response = await fetch('/api/staff/tasks', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    tasks = data.tasks;
+                    updateTaskLists();
+                }
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+            }
+        }
+
+        // Update task lists
+        function updateTaskLists() {
+            const dashboardList = document.getElementById('task-list');
+            const fullList = document.getElementById('full-task-list');
+            
+            // Dashboard list (top 3)
+            const topTasks = tasks.slice(0, 3);
+            dashboardList.innerHTML = topTasks.map(task => `
+                <li class="task-item ${task.status}">
+                    <input type="checkbox" class="task-checkbox" ${task.status === 'completed' ? 'checked' : ''} 
+                           onchange="toggleTaskStatus('${task.id}')">
+                    <div class="task-info">
+                        <div class="task-name">${task.toilet_name}</div>
+                        <div class="task-time">${new Date(task.scheduled_time).toLocaleString()}</div>
+                    </div>
+                    <div class="task-actions">
+                        ${task.status === 'pending' ? `<button class="btn-small btn-start" onclick="startCleaning('${task.toilet_id}', '${task.toilet_name}')">Start</button>` : ''}
+                        ${task.status === 'in_progress' ? `<button class="btn-small btn-complete" onclick="completeTask('${task.id}')">Complete</button>` : ''}
+                    </div>
+                </li>
+            `).join('');
+
+            // Full list
+            fullList.innerHTML = tasks.map(task => `
+                <li class="task-item ${task.status}">
+                    <input type="checkbox" class="task-checkbox" ${task.status === 'completed' ? 'checked' : ''} 
+                           onchange="toggleTaskStatus('${task.id}')">
+                    <div class="task-info">
+                        <div class="task-name">${task.toilet_name}</div>
+                        <div class="task-time">${new Date(task.scheduled_time).toLocaleString()}</div>
+                        <div style="margin-top: 5px;">
+                            <span class="priority-badge badge-${task.priority}">${task.priority}</span>
+                            <span style="margin-left: 10px; font-size: 0.8em; color: #6c757d;">Est: ${task.estimated_duration}</span>
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        ${task.status === 'pending' ? `<button class="btn-small btn-start" onclick="startCleaning('${task.toilet_id}', '${task.toilet_name}')">Start</button>` : ''}
+                        ${task.status === 'in_progress' ? `<button class="btn-small btn-complete" onclick="completeTask('${task.id}')">Complete</button>` : ''}
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // Initialize map
+        function initMap(mapId = 'map') {
+            const mapElement = document.getElementById(mapId);
+            if (!mapElement) return;
+
+            map = L.map(mapId).setView([28.6139, 77.2090], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add priority toilet markers
+            updateMap();
+        }
+
+        // Update map with priority toilets
+        function updateMap() {
+            if (!map) return;
+
+            // Clear existing markers
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker && !layer.options.isUserLocation) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            // Add priority toilet markers
+            priorityToilets.forEach(toilet => {
+                const markerColor = getPriorityColor(toilet.priority);
+                const icon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="background-color: ${markerColor}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`,
+                    iconSize: [26, 26],
+                    iconAnchor: [13, 13]
+                });
+
+                L.marker([toilet.lat, toilet.lng], { icon })
+                    .addTo(map)
+                    .bindPopup(createPopupContent(toilet));
+            });
+        }
+
+        // Get priority color
+        function getPriorityColor(priority) {
+            switch (priority) {
+                case 'high': return '#e74c3c';
+                case 'medium': return '#f39c12';
+                case 'low': return '#27ae60';
+                default: return '#95a5a6';
+            }
+        }
+
+        // Create popup content
+        function createPopupContent(toilet) {
+            return `
+                <div style="min-width: 200px;">
+                    <h4 style="margin: 0 0 10px 0; color: #2c3e50;">${toilet.name}</h4>
+                    <p style="margin: 0 0 10px 0; color: #6c757d; font-size: 0.9em;">${toilet.address}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-weight: 600;">Priority:</span>
+                        <span class="priority-badge badge-${toilet.priority}" style="text-transform: uppercase;">${toilet.priority}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-weight: 600;">Score:</span>
+                        <span style="font-weight: bold; color: #2c3e50;">${toilet.hygiene_score}/100</span>
+                    </div>
+                    <button onclick="startCleaning('${toilet.id}', '${toilet.name}')" style="width: 100%; padding: 8px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                        Start Cleaning
+                    </button>
+                </div>
+            `;
+        }
+
+        // Start cleaning
+        function startCleaning(toiletId, toiletName) {
+            currentToiletId = toiletId;
+            document.getElementById('modal-toilet-name').textContent = toiletName;
+            document.getElementById('cleaningModal').style.display = 'block';
+        }
+
+        // Confirm start cleaning
+        async function confirmStartCleaning() {
+            if (!currentToiletId) return;
+
+            try {
+                const response = await fetch('/api/staff/start-cleaning', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        toilet_id: currentToiletId
+                    })
+                });
+
+                if (response.ok) {
+                    showNotification('Success', 'Cleaning started! Estimated completion: 30 seconds', 'success');
+                    closeModal();
+                    
+                    // Refresh data after a delay
+                    setTimeout(() => {
+                        loadDashboardData();
+                    }, 30000); // Refresh after 30 seconds when cleaning should be complete
+                } else {
+                    const data = await response.json();
+                    showNotification('Error', data.error || 'Failed to start cleaning', 'error');
+                }
+            } catch (error) {
+                showNotification('Error', 'Network error occurred', 'error');
+            }
+        }
+
+        // Complete task
+        async function completeTask(taskId) {
+            // Simulate task completion
+            showNotification('Success', 'Task completed successfully!', 'success');
+            
+            // Refresh tasks after a short delay
+            setTimeout(() => {
+                loadTasks();
+                loadDashboardData();
+            }, 1000);
+        }
+
+        // Toggle task status
+        function toggleTaskStatus(taskId) {
+            // This would normally update the task status
+            showNotification('Info', 'Task status updated', 'info');
+        }
+
+        // Handle toilet click - show cleaning action
+        function handleToiletClick(toiletId, toiletName, toiletAddress, priority, hygieneScore) {
+            // Hide all other clean actions
+            document.querySelectorAll('.clean-action').forEach(action => {
+                action.style.display = 'none';
+            });
+            
+            // Show clean action for this toilet
+            const cleanAction = document.getElementById(`clean-action-${toiletId}`);
+            if (cleanAction) {
+                cleanAction.style.display = 'block';
+            }
+            
+            // Also focus on toilet location if map is available
+            const toilet = priorityToilets.find(t => t.id === toiletId);
+            if (toilet && map) {
+                map.setView([toilet.lat, toilet.lng], 16);
+            }
+            
+            // Show notification with toilet details
+            showNotification('Toilet Selected', `${toiletName} - Score: ${hygieneScore}/100, Priority: ${priority}`, 'info');
+        }
+
+        // Focus on toilet
+        function focusOnToilet(toiletId) {
+            const toilet = priorityToilets.find(t => t.id === toiletId);
+            if (toilet && map) {
+                map.setView([toilet.lat, toilet.lng], 16);
+                showSection('map');
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('cleaningModal').style.display = 'none';
+            currentToiletId = null;
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch('/api/staff/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const stats = data.stats;
+                    
+                    document.getElementById('performance-stats').innerHTML = `
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                                <div style="font-size: 2em; font-weight: bold; color: #27ae60;">${stats.cleaned_today}</div>
+                                <div style="color: #6c757d; margin-top: 5px;">Cleaned Today</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                                <div style="font-size: 2em; font-weight: bold; color: #3498db;">${stats.tasks_completed}</div>
+                                <div style="color: #6c757d; margin-top: 5px;">Tasks Completed</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                                <div style="font-size: 2em; font-weight: bold; color: #f39c12;">${stats.on_time_percentage}%</div>
+                                <div style="color: #6c757d; margin-top: 5px;">On Time</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                                <div style="font-size: 2em; font-weight: bold; color: #9b59b6;">${stats.total_tasks}</div>
+                                <div style="color: #6c757d; margin-top: 5px;">Total Tasks</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('rating-stats').innerHTML = `
+                        <div style="text-align: center; padding: 40px;">
+                            <div style="font-size: 4em; font-weight: bold; color: #f39c12;">${stats.avg_rating}</div>
+                            <div style="color: #6c757d; margin-top: 10px;">Average Rating</div>
+                            <div style="margin-top: 20px;">
+                                ${generateStars(stats.avg_rating)}
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        // Generate star rating
+        function generateStars(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            let stars = '';
+            
+            for (let i = 0; i < fullStars; i++) {
+                stars += '<i class="fas fa-star" style="color: #f39c12;"></i>';
+            }
+            
+            if (hasHalfStar) {
+                stars += '<i class="fas fa-star-half-alt" style="color: #f39c12;"></i>';
+            }
+            
+            const emptyStars = 5 - Math.ceil(rating);
+            for (let i = 0; i < emptyStars; i++) {
+                stars += '<i class="far fa-star" style="color: #ddd;"></i>';
+            }
+            
+            return stars;
+        }
+
+        // Refresh functions
+        function refreshTasks() {
+            loadTasks();
+            showNotification('Success', 'Tasks refreshed', 'success');
+        }
+
+        function refreshPriorityToilets() {
+            loadPriorityToilets();
+            showNotification('Success', 'Priority toilets refreshed', 'success');
+        }
+
+        // Show notification
+        function showNotification(title, message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const titleEl = document.getElementById('notification-title');
+            const messageEl = document.getElementById('notification-message');
+            
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            
+            // Set border color based on type
+            const borderColor = type === 'error' ? '#e74c3c' : type === 'success' ? '#27ae60' : '#3498db';
+            notification.style.borderLeftColor = borderColor;
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+
+        // Set up real-time updates
+        function setupRealTimeUpdates() {
+            // Check for updates every 30 seconds
+            setInterval(async () => {
+                try {
+                    const response = await fetch('/api/staff/updates', {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Handle new urgent toilets
+                        if (data.new_urgent_toilets && data.new_urgent_toilets.length > 0) {
+                            data.new_urgent_toilets.forEach(toilet => {
+                                showNotification('🚨 URGENT', 
+                                    `${toilet.icon} ${toilet.name} needs immediate attention!`, 
+                                    'error');
+                            });
+                        }
+                        
+                        // Handle recent cleaning updates
+                        if (data.recent_cleaning_updates && data.recent_cleaning_updates.length > 0) {
+                            data.recent_cleaning_updates.forEach(update => {
+                                if (update.type === 'cleaning_started') {
+                                    showNotification('🧹 Cleaning Started', 
+                                        `${update.cleaner_name} started cleaning ${update.toilet_name}`, 
+                                        'info');
+                                } else if (update.type === 'cleaned') {
+                                    showNotification('✅ Cleaning Complete', 
+                                        `${update.toilet_name} is now clean! Score: ${update.new_score}/100`, 
+                                        'success');
+                                }
+                            });
+                        }
+                        
+                        // Refresh data if there are any updates
+                        if (data.has_updates) {
+                            loadDashboardData();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error checking for updates:', error);
+                }
+            }, 30000);
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('cleaningModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
