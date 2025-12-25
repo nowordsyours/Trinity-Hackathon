@@ -7,7 +7,7 @@ A comprehensive AI-powered system for real-time monitoring, prediction, and mana
 ## 🎯 Problems Solved
 
 **Complete toilet hygiene management system**:
-- **Real-time Hygiene Monitoring**: Continuous tracking with 5-10% depreciation every 10 seconds
+- **Real-time Hygiene Monitoring**: Continuous tracking with every 30 mins .
 - **AI-Powered Prediction**: Forecast hygiene degradation 2-4 hours in advance
 - **Automated Staff Management**: Smart cleaning assignments and notifications
 - **Public User Experience**: Interactive maps and real-time facility information
