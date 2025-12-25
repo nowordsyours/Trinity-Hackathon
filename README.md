@@ -1,11 +1,6 @@
-# 🧼 The AI-IoT Hygiene Ecosystem  
-### Transforming Public Sanitation through Real-Time Monitoring & Digital Trust 
-
--
-# Smart Toilet Hygiene Monitoring System ( CleanFind AI)
+# 🧼 The AI-IoT Hygiene Monitoring System ( CleanFind AI)
 
 ## 🏆 Complete AI- IoT-Enabled Public Toilet Management Solution
-
 
 ## 🚀 Hackathon Project Overview 
 
