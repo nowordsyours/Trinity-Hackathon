@@ -154,6 +154,9 @@ We conducted a **10-point questionnaire** to identify real user pain points:
 ![humidity](https://github.com/user-attachments/assets/85886fb6-49dc-4d38-a85f-74abf1ac69ab)
 <img width="2200" height="1765" alt="confusion_matrix" src="https://github.com/user-attachments/assets/eaf4403c-6cb6-4f78-b354-14e577e385a9" />
 <img width="2969" height="1765" alt="feature_importance" src="https://github.com/user-attachments/assets/0365eb34-edc6-4b03-84d6-baf66983cefa" />
+<img width="1888" height="923" alt="image" src="https://github.com/user-attachments/assets/394dbab7-b6ef-4a32-853f-f697bdb87c71" />
+<img width="1896" height="918" alt="image" src="https://github.com/user-attachments/assets/cdb98932-314b-45f0-b743-811eb5c14ad0" />
+<img width="1888" height="914" alt="image" src="https://github.com/user-attachments/assets/17c72425-dd77-4d74-90b9-ac930ae4d86e" />
 
 
 
