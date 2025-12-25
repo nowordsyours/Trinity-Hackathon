@@ -1,6 +1,6 @@
-# Smart Toilet Hygiene Monitoring System
+# Smart Toilet Hygiene Monitoring System ( CleanFind AI)
 
-## 🏆 Complete IoT-Enabled Public Toilet Management Solution
+## 🏆 Complete AI- IoT-Enabled Public Toilet Management Solution
 
 A comprehensive AI-powered system for real-time monitoring, prediction, and management of public toilet hygiene. Features IoT sensor integration, automated staff notifications, multi-user dashboards, and predictive analytics.
 
