@@ -4,8 +4,16 @@
 
 ## 🚀 Hackathon Project Overview 
 
-**The IoT Hygiene Ecosystem** is a smart sanitation solution designed to restore **public trust in toilets** using **IoT sensors, real-time hygiene scoring, and automated sanitation actions**.  
-The project targets **urban, rural, and institutional public toilets** under India's **Swachh Bharat Mission (SBM)** framework. 
+### 🌐 The Internet of Things Hygiene Ecosystem
+
+The **Internet of Things Hygiene Ecosystem** is a cool and practical way to make public toilets cleaner and more reliable.  
+It uses sensors to check how clean a toilet is and shows the hygiene status in real time.  
+The system can also take automatic actions on its own to maintain cleanliness.  
+This helps people trust that public toilets are clean and safe when they use them.  
+Overall, the Internet of Things Hygiene Ecosystem works as a solution to this sanitation problem.
+
+The project targets **urban, rural, and institutional public toilets** under India’s  
+**Swachh Bharat Mission (SBM)** framework.
 
 
 📅 **Target Deployment:** July 2025  
