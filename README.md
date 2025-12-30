@@ -364,7 +364,7 @@ The system includes hard coded demo data and scenerios:
 - **End-to-End Encryption**: Secure data transmission and storage of the data with proper encryption of data.
 - **User Privacy**: The data of users remain private.
 - **Access Control**: Multi-factor authentication .
-- **Audit Logging**: activity tracking for security monitoring and privevntion against tampering.
+- **Audit Logging**: activity tracking for security monitoring and privention against tampering.
 - **Data Anonymization**: Personal data protection in analytics
 
 ### System Security
@@ -381,7 +381,7 @@ The system includes hard coded demo data and scenerios:
 
 ### Advanced AI Capabilities
 - **Deep Learning Models**: it enchances the prediction of the data.
-- **Behavioral Analytics**: User pattern  and detect the upcoming traffic of the peoplse and predict the severity. 
+- **Behavioral Analytics**: User pattern  and detect the upcoming traffic of the people and predict the severity. 
 - **Autonomous Decision Making**: automatically alerts the workers .
 
 ### IoT Innovations
@@ -389,7 +389,7 @@ The system includes hard coded demo data and scenerios:
 - **Energy Harvesting**: Nodes and pair with each other to form an netowork also 
 - **Edge AI**: locally data can be calculted.
 - **5G Integration**: Due to 5g networks low latency is an great advantage.
-- **Mesh Networking**: we can use various networking algorithm to connect with diconnect node.
+- **Mesh Networking**: we can use various networking algorithm to connect with disconnect node.
 
 ### Global Expansion
 - **Multiple language Support**: Multilingual.
@@ -403,7 +403,7 @@ The system includes hard coded demo data and scenerios:
 This project is created for hackathon and demo purposes. Feel free to use,update and do whatever you thinks it will be benefit our code.
 #
 ### Maintenance & Updates
-- **Automated Updates**: The system autmatically gets updated with the help of the sensors.
+- **Automated Updates**: The system automatically gets updated with the help of the sensors.
 - **Health Monitoring**: system regulary checks the data regularly.
 - **Performance Optimization**: Automatic and manually also the data can be calibrated.
 - **Data Management**: Data will bew refresh and cleaned after certain period of time.
